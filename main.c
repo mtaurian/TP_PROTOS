@@ -16,6 +16,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdbool.h>
 
 #include <unistd.h>
 #include <sys/types.h>   // socket
