@@ -2,8 +2,8 @@
 #include <stdlib.h>
 #include <check.h>
 
-#include "parser_utils.h"
-
+#include "../include/parser_utils.h"
+#include "tests.h"
 static void
 assert_eq(const unsigned type, const int c, const struct parser_event *e) {
     ck_assert_ptr_eq (0,    e->next);
