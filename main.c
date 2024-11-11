@@ -24,12 +24,177 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include "src/selector.h"
-#include "socks5.h"
-#include "socks5nio.h"
+#include "src/include/buffer.h"
+#include "src/include/selector.h"
 
 static bool done = false;
 
+#define BUFFER_SIZE 1024
+
+static void sigterm_handler(const int signal) {
+    printf("signal %d, cleaning up and exiting\n",signal);
+    done = true;
+}
+
+int main(const int argc, const char **argv) {
+    unsigned port = 1080;
+
+    if(argc == 1) {
+        // utilizamos el default
+    } else if(argc == 2) {
+        char *end     = 0;
+        const long sl = strtol(argv[1], &end, 10);
+
+        if (end == argv[1]|| '\0' != *end
+           || ((LONG_MIN == sl || LONG_MAX == sl) && ERANGE == errno)
+           || sl < 0 || sl > USHRT_MAX) {
+            fprintf(stderr, "port should be an integer: %s\n", argv[1]);
+            return 1;
+           }
+        port = sl;
+    } else {
+        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+        return 1;
+    }
+
+    // no tenemos nada que leer de stdin
+    close(0);
+
+    const char *err_msg = NULL;
+    /*
+    selector_status   ss      = SELECTOR_SUCCESS;
+    fd_selector selector      = NULL;
+    */
+
+    // Configurar la dirección del servidor
+
+    struct sockaddr_in server_addr, client_addr;
+    memset(&server_addr, 0, sizeof(server_addr));
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_addr.s_addr = htonl(INADDR_ANY);;  // Escuchar en todas las interfaces
+    server_addr.sin_port = htons(port);
+
+    socklen_t client_addr_len = sizeof(client_addr);
+
+    int server_fd, client_fd;
+    server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (server_fd < 0) {
+        perror("unable to create socket");
+        exit(EXIT_FAILURE); // goto finally
+    }
+
+    fprintf(stdout, "Listening on TCP port %d\n", port);
+
+    // man 7 ip. no importa reportar nada si falla.
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
+
+    // Asociar el socket a la dirección y puerto
+    if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+        perror("Error en bind");
+        close(server_fd);
+        exit(EXIT_FAILURE);
+    }
+
+    // Escuchar conexiones entrantes
+    if (listen(server_fd, 20) < 0) {
+        perror("Error en listen");
+        close(server_fd);
+        exit(EXIT_FAILURE);
+    }
+
+
+    // registrar sigterm es útil para terminar el programa normalmente.
+    // esto ayuda mucho en herramientas como valgrind.
+    signal(SIGTERM, sigterm_handler);
+    signal(SIGINT,  sigterm_handler);
+
+
+    printf("Servidor escuchando\n");
+
+    // Aceptar conexiones entrantes
+    client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
+    if (client_fd < 0) {
+        perror("Error en accept");
+        close(server_fd);
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Cliente conectado.\n");
+
+    buffer* buffer = malloc(sizeof(struct buffer));
+    uint8_t* data = malloc(sizeof(uint8_t) * BUFFER_SIZE);
+    buffer_init(buffer, BUFFER_SIZE, data);
+
+
+
+    for(;!done;) {
+        // variable donde almaceno cantidad en la que se puede escribir
+        size_t writable_bytes;
+
+        uint8_t *write_ptr = buffer_write_ptr(buffer, &writable_bytes);
+
+        // leo del socket y escribo al buffer lo q hay en socket
+        ssize_t bytes_received = recv(client_fd, write_ptr, writable_bytes, 0);
+
+        if (bytes_received <= 0) {
+            if (bytes_received == 0) {
+                printf("Cliente desconectado.\n");
+            } else {
+                perror("Error en recv");
+            }
+            break;
+        }
+
+        // avanzo puntero
+        buffer_write_adv(buffer, bytes_received);
+
+        // lectura del buffer
+        while (buffer_can_read(buffer)) {
+            size_t readable_bytes;
+            uint8_t *read_ptr = buffer_read_ptr(buffer, &readable_bytes);
+
+            // envío para q lea el cliente
+            ssize_t bytes_sent = send(client_fd, read_ptr, readable_bytes, 0);
+
+            if (bytes_sent < 0) {
+                perror("Error en send");
+                break;
+            }
+
+            // avanzo bytes leidos
+            buffer_read_adv(buffer, bytes_sent);
+        }
+    }
+
+
+    // while ((bytes_received = recv(client_fd, bufferB, BUFFER_SIZE, 0)) > 0) {
+    //     // Enviar de vuelta al cliente los datos recibidos
+    //
+    //     //interpreto lo q hay en buffer -> maquina de estados en .read
+    //
+    //     send(client_fd, bufferB, bytes_received, 0);
+    // }
+    //
+    // if (bytes_received < 0) {
+    //     perror("Error en recv");
+    // } else {
+    //     printf("Cliente desconectado.\n");
+    // }
+
+    // Cerrar los sockets
+    close(client_fd);
+    close(server_fd);
+    printf("Servidor cerrado.\n");
+
+    free(buffer->data);
+    free(buffer);
+    return 0;
+}
+
+
+
+
+/*
 static void
 sigterm_handler(const int signal) {
     printf("signal %d, cleaning up and exiting\n",signal);
@@ -46,7 +211,7 @@ main(const int argc, const char **argv) {
         char *end     = 0;
         const long sl = strtol(argv[1], &end, 10);
 
-        if (end == argv[1]|| '\0' != *end 
+        if (end == argv[1]|| '\0' != *end
            || ((LONG_MIN == sl || LONG_MAX == sl) && ERANGE == errno)
            || sl < 0 || sl > USHRT_MAX) {
             fprintf(stderr, "port should be an integer: %s\n", argv[1]);
@@ -119,16 +284,16 @@ main(const int argc, const char **argv) {
         goto finally;
     }
     const struct fd_handler socksv5 = {
-        .handle_read       = socksv5_passive_accept,
-        .handle_write      = NULL,
-        .handle_close      = NULL, // nada que liberar
+    .handle_read       = socksv5_passive_accept,
+    .handle_write      = NULL,
+    .handle_close      = NULL, // nada que liberar
     };
-    ss = selector_register(selector, server, &socksv5,
-                                              OP_READ, NULL);
+    ss = selector_register(selector, server, &socksv5,OP_READ, NULL);
     if(ss != SELECTOR_SUCCESS) {
         err_msg = "registering fd";
         goto finally;
     }
+
     for(;!done;) {
         err_msg = NULL;
         ss = selector_select(selector);
@@ -158,10 +323,11 @@ finally:
     }
     selector_close();
 
-    socksv5_pool_destroy();
+    // socksv5_pool_destroy();
 
     if(server >= 0) {
         close(server);
     }
     return ret;
 }
+*/

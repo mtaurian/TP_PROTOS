@@ -1,15 +1,17 @@
 include ./Makefile.inc
 
-all: main server client
+all: main
 
 main:
-	$(CC) -o main main.c
+	$(CC) -o main main.c ./src/lib/*.c
 
 server:
 
+
 client:
 
+
 clean:
-	rm -rf src/*.o
+	rm -rf src/*.o main
 
 
