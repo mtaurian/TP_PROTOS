@@ -31,8 +31,39 @@ static bool done = false;
 
 #define BUFFER_SIZE 1024
 
+static void pop3_passive_accept(struct selector_key *key) {
+    struct sockaddr_storage client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+    int client_fd = accept(key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
+    if (client_fd < 0) {
+        perror("Error when accepting client connection");
+        close(key->fd);
+        exit(EXIT_FAILURE);
+    }
+
+    if(selector_fd_set_nio(client_fd) == -1) {
+        perror("Unable to set client socket flags");
+        close(client_fd);
+        return;
+    }
+
+    const struct fd_handler pop3 = {
+        .handle_read       = NULL,
+        .handle_write      = NULL,
+        .handle_close      = NULL,
+    };
+
+    selector_status ss = selector_register(key->s, client_fd, &pop3, OP_NOOP, NULL);
+    if(ss != SELECTOR_SUCCESS) {
+        perror("Unable to register client socket handler");
+        close(client_fd);
+        return;
+    }
+    printf("Cliente conectado\n");
+}
+
 static void sigterm_handler(const int signal) {
-    printf("signal %d, cleaning up and exiting\n",signal);
+    printf("Signal %d, cleaning up and exiting\n",signal);
     done = true;
 }
 
@@ -57,27 +88,20 @@ int main(const int argc, const char **argv) {
         return 1;
     }
 
-    // no tenemos nada que leer de stdin
     close(0);
 
     const char *err_msg = NULL;
-    /*
     selector_status   ss      = SELECTOR_SUCCESS;
     fd_selector selector      = NULL;
-    */
 
     // Configurar la dirección del servidor
-
-    struct sockaddr_in server_addr, client_addr;
+    struct sockaddr_in server_addr;
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);;  // Escuchar en todas las interfaces
     server_addr.sin_port = htons(port);
 
-    socklen_t client_addr_len = sizeof(client_addr);
-
-    int server_fd, client_fd;
-    server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (server_fd < 0) {
         perror("unable to create socket");
         exit(EXIT_FAILURE); // goto finally
@@ -108,87 +132,87 @@ int main(const int argc, const char **argv) {
     signal(SIGTERM, sigterm_handler);
     signal(SIGINT,  sigterm_handler);
 
+    // selector setup
+    if(selector_fd_set_nio(server_fd) == -1) {
+        err_msg = "getting server socket flags";
+        goto finally;
+    }
+    const struct selector_init conf = {
+        .signal = SIGALRM,
+        .select_timeout = {
+            .tv_sec  = 10,
+            .tv_nsec = 0,
+        },
+    };
 
-    printf("Servidor escuchando\n");
-
-    // Aceptar conexiones entrantes
-    client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len);
-    if (client_fd < 0) {
-        perror("Error en accept");
-        close(server_fd);
-        exit(EXIT_FAILURE);
+    if(0 != selector_init(&conf)) {
+        perror("unable to initialize selector");
+        goto finally;
     }
 
-    printf("Cliente conectado.\n");
+    selector = selector_new(1024);
+    if(selector == NULL) {
+        perror("unable to create selector");
+        goto finally;
+    }
+
+    const struct fd_handler pop3 = {
+        .handle_read       = pop3_passive_accept,
+        .handle_write      = NULL,
+        .handle_close      = NULL, // nada que liberar
+    };
+
+    // register as reader
+    ss = selector_register(selector, server_fd, &pop3,OP_READ, NULL);
+    if(ss != SELECTOR_SUCCESS) {
+        printf("unable to register socket handler\n");
+        goto finally;
+    }
+
+    printf("Servidor escuchando\n");
 
     buffer* buffer = malloc(sizeof(struct buffer));
     uint8_t* data = malloc(sizeof(uint8_t) * BUFFER_SIZE);
     buffer_init(buffer, BUFFER_SIZE, data);
 
 
-
     for(;!done;) {
-        // variable donde almaceno cantidad en la que se puede escribir
-        size_t writable_bytes;
-
-        uint8_t *write_ptr = buffer_write_ptr(buffer, &writable_bytes);
-
-        // leo del socket y escribo al buffer lo q hay en socket
-        ssize_t bytes_received = recv(client_fd, write_ptr, writable_bytes, 0);
-
-        if (bytes_received <= 0) {
-            if (bytes_received == 0) {
-                printf("Cliente desconectado.\n");
-            } else {
-                perror("Error en recv");
-            }
-            break;
-        }
-
-        // avanzo puntero
-        buffer_write_adv(buffer, bytes_received);
-
-        // lectura del buffer
-        while (buffer_can_read(buffer)) {
-            size_t readable_bytes;
-            uint8_t *read_ptr = buffer_read_ptr(buffer, &readable_bytes);
-
-            // envío para q lea el cliente
-            ssize_t bytes_sent = send(client_fd, read_ptr, readable_bytes, 0);
-
-            if (bytes_sent < 0) {
-                perror("Error en send");
-                break;
-            }
-
-            // avanzo bytes leidos
-            buffer_read_adv(buffer, bytes_sent);
+        ss = selector_select(selector);
+        if(ss != SELECTOR_SUCCESS) {
+            perror("Error en selector_select");
+            goto finally;
         }
     }
 
+    int ret = 0;
+finally:
+    if(ss != SELECTOR_SUCCESS) {
+        fprintf(stderr, "%s: %s\n", (err_msg == NULL) ? "": err_msg,
+                                  ss == SELECTOR_IO
+                                      ? strerror(errno)
+                                      : selector_error(ss));
+        ret = 2;
+    } else if(err_msg) {
+        perror(err_msg);
+        ret = 1;
+    }
+    if(selector != NULL) {
+        selector_destroy(selector);
+    }
+    selector_close();
 
-    // while ((bytes_received = recv(client_fd, bufferB, BUFFER_SIZE, 0)) > 0) {
-    //     // Enviar de vuelta al cliente los datos recibidos
-    //
-    //     //interpreto lo q hay en buffer -> maquina de estados en .read
-    //
-    //     send(client_fd, bufferB, bytes_received, 0);
-    // }
-    //
-    // if (bytes_received < 0) {
-    //     perror("Error en recv");
-    // } else {
-    //     printf("Cliente desconectado.\n");
-    // }
+    // socksv5_pool_destroy();
 
-    // Cerrar los sockets
-    close(client_fd);
-    close(server_fd);
-    printf("Servidor cerrado.\n");
-
+    if(server_fd >= 0) {
+        close(server_fd);
+        printf("Servidor cerrado.\n");
+    }
     free(buffer->data);
     free(buffer);
-    return 0;
+
+
+    return ret;
+
 }
 
 
