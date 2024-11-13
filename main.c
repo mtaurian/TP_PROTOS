@@ -31,36 +31,135 @@ static bool done = false;
 
 #define BUFFER_SIZE 1024
 
+static void close_client(struct selector_key *key) {
+    printf("Free buffer handler accessed\n");
+    buffer *buffer = key->data;
+    free(buffer->data);
+    free(buffer);
+    close(key->fd);
+    selector_unregister_fd(key->s, key->fd);
+}
+
+
+static void read_handler(struct selector_key *key) {
+    printf("Read handler accessed\n");
+
+    buffer *buffer = key->data;
+
+    if(!buffer_can_write(buffer)) {
+        selector_set_interest_key(key, OP_WRITE);
+        return;
+    }
+
+    size_t writable_bytes;
+    uint8_t *write_ptr = buffer_write_ptr(buffer, &writable_bytes);
+
+    // READ from socket into buffer
+    ssize_t bytes_received = recv(key->fd, write_ptr, writable_bytes, 0);
+    printf("Bytes received: %ld\n", bytes_received);
+
+    if (bytes_received <= 0) {
+        if (bytes_received == 0) {
+            printf("Client disconnected.\n");
+        } else {
+            perror("Error in recv");
+        }
+        selector_unregister_fd(key->s, key->fd);
+        close(key->fd);
+        return;
+    }
+
+    buffer_write_adv(buffer, bytes_received);
+
+    /** See if there's space to write in the buffer,
+    *  if not, we need to wait for the buffer to be read (write_handler (writes in socket))
+   **/
+    if (buffer_can_write(buffer)) {
+        selector_set_interest_key(key, OP_READ | OP_WRITE);
+    } else {
+        selector_set_interest_key(key, OP_READ);
+    }
+}
+
+static void write_handler(struct selector_key *key) {
+    printf("Write handler accessed\n");
+    printf("Client fd: %d\n", key->fd);
+    buffer *buffer = key->data;
+
+
+    if (!buffer_can_read(buffer)) {
+        selector_set_interest_key(key, OP_READ);
+        return;
+    }
+
+    size_t readable_bytes;
+    uint8_t *read_ptr = buffer_read_ptr(buffer, &readable_bytes);
+
+    // echo back to client
+    ssize_t bytes_sent = send(key->fd, read_ptr, readable_bytes, 0);
+    printf("Bytes sent: %ld\n", bytes_sent);
+
+    if (bytes_sent < 0) {
+        perror("Error in send");
+        selector_unregister_fd(key->s, key->fd);
+        close(key->fd);
+        return;
+    }
+
+    buffer_read_adv(buffer, bytes_sent);
+
+    /** See if theres something to read from the buffer,
+     *  if not, we need to wait for new input on buffer (read_handler (reads from socket))
+    **/
+    if (buffer_can_read(buffer)) {
+        selector_set_interest_key(key, OP_READ | OP_WRITE);
+    } else {
+        selector_set_interest_key(key, OP_READ);
+    }
+
+}
+
+
 static void pop3_passive_accept(struct selector_key *key) {
+    printf("Passive accept handler accessed\n");
     struct sockaddr_storage client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     int client_fd = accept(key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
+
     if (client_fd < 0) {
         perror("Error when accepting client connection");
-        close(key->fd);
-        exit(EXIT_FAILURE);
+        return;
     }
 
-    if(selector_fd_set_nio(client_fd) == -1) {
+    if (selector_fd_set_nio(client_fd) == -1) {
         perror("Unable to set client socket flags");
         close(client_fd);
         return;
     }
 
     const struct fd_handler pop3 = {
-        .handle_read       = NULL,
-        .handle_write      = NULL,
-        .handle_close      = NULL,
+        .handle_read = read_handler,
+        .handle_write = write_handler,
+        .handle_close = close_client,
     };
 
-    selector_status ss = selector_register(key->s, client_fd, &pop3, OP_NOOP, NULL);
-    if(ss != SELECTOR_SUCCESS) {
+    buffer* buffer = malloc(sizeof(struct buffer));
+    uint8_t* data = malloc(sizeof(uint8_t) * BUFFER_SIZE);
+    buffer_init(buffer, BUFFER_SIZE, data);
+
+    selector_status ss = selector_register(key->s, client_fd, &pop3, OP_READ, buffer);
+    if (ss != SELECTOR_SUCCESS) {
         perror("Unable to register client socket handler");
+        free(data);
+        free(buffer);
         close(client_fd);
         return;
     }
-    printf("Cliente conectado\n");
+
+    printf("Client connected\n");
 }
+
+
 
 static void sigterm_handler(const int signal) {
     printf("Signal %d, cleaning up and exiting\n",signal);
@@ -171,10 +270,6 @@ int main(const int argc, const char **argv) {
 
     printf("Servidor escuchando\n");
 
-    buffer* buffer = malloc(sizeof(struct buffer));
-    uint8_t* data = malloc(sizeof(uint8_t) * BUFFER_SIZE);
-    buffer_init(buffer, BUFFER_SIZE, data);
-
 
     for(;!done;) {
         ss = selector_select(selector);
@@ -186,7 +281,7 @@ int main(const int argc, const char **argv) {
 
     int ret = 0;
 finally:
-    if(ss != SELECTOR_SUCCESS) {
+    /*if(ss != SELECTOR_SUCCESS) {
         fprintf(stderr, "%s: %s\n", (err_msg == NULL) ? "": err_msg,
                                   ss == SELECTOR_IO
                                       ? strerror(errno)
@@ -195,7 +290,7 @@ finally:
     } else if(err_msg) {
         perror(err_msg);
         ret = 1;
-    }
+    }*/
     if(selector != NULL) {
         selector_destroy(selector);
     }
@@ -207,9 +302,6 @@ finally:
         close(server_fd);
         printf("Servidor cerrado.\n");
     }
-    free(buffer->data);
-    free(buffer);
-
 
     return ret;
 
