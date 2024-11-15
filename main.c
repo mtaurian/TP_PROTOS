@@ -46,11 +46,6 @@ static void read_handler(struct selector_key *key) {
 
     buffer *buffer = key->data;
 
-    if(!buffer_can_write(buffer)) {
-        selector_set_interest_key(key, OP_WRITE);
-        return;
-    }
-
     size_t writable_bytes;
     uint8_t *write_ptr = buffer_write_ptr(buffer, &writable_bytes);
 
@@ -71,14 +66,13 @@ static void read_handler(struct selector_key *key) {
 
     buffer_write_adv(buffer, bytes_received);
 
-    /** See if there's space to write in the buffer,
-    *  if not, we need to wait for the buffer to be read (write_handler (writes in socket))
-   **/
-    if (buffer_can_write(buffer)) {
-        selector_set_interest_key(key, OP_READ | OP_WRITE);
-    } else {
-        selector_set_interest_key(key, OP_READ);
-    }
+    size_t readable_bytes;
+    uint8_t *read_ptr = buffer_read_ptr(buffer, &readable_bytes);
+
+    // echo back to client
+    ssize_t bytes_sent = send(key->fd, read_ptr, readable_bytes, 0);
+
+    buffer_read_adv(buffer, bytes_sent);
 }
 
 static void write_handler(struct selector_key *key) {
@@ -108,13 +102,8 @@ static void write_handler(struct selector_key *key) {
 
     buffer_read_adv(buffer, bytes_sent);
 
-    /** See if theres something to read from the buffer,
-     *  if not, we need to wait for new input on buffer (read_handler (reads from socket))
-    **/
     if (buffer_can_read(buffer)) {
-        selector_set_interest_key(key, OP_READ | OP_WRITE);
-    } else {
-        selector_set_interest_key(key, OP_READ);
+        selector_set_interest(key->s,key->fd, OP_READ);
     }
 
 }
