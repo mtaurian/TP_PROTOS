@@ -37,13 +37,11 @@ void read_handler(struct selector_key *key) {
 
     buffer_write_adv(buffer, bytes_received);
 
-    size_t readable_bytes;
-    uint8_t *read_ptr = buffer_read_ptr(buffer, &readable_bytes);
+    if (buffer_can_write(buffer))
+        selector_set_interest_key(key, OP_NOOP | OP_READ | OP_WRITE);
 
-    // echo back to client
-    ssize_t bytes_sent = send(key->fd, read_ptr, readable_bytes, 0);
+    selector_set_interest_key(key, OP_WRITE | OP_NOOP);
 
-    buffer_read_adv(buffer, bytes_sent);
 }
 
 void write_handler(struct selector_key *key) {
@@ -73,9 +71,10 @@ void write_handler(struct selector_key *key) {
 
     buffer_read_adv(buffer, bytes_sent);
 
-    if (buffer_can_read(buffer)) {
-        selector_set_interest(key->s,key->fd, OP_READ);
-    }
+    if (buffer_can_read(buffer))
+        selector_set_interest_key(key, OP_NOOP | OP_READ | OP_WRITE);
+
+    selector_set_interest_key(key, OP_READ | OP_NOOP);
 
 }
 
@@ -100,6 +99,7 @@ void pop3_passive_accept(struct selector_key *key) {
         .handle_read = read_handler,
         .handle_write = write_handler,
         .handle_close = close_client,
+        .handle_block = NULL,
     };
 
     buffer* buffer = malloc(sizeof(struct buffer));
