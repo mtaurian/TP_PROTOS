@@ -125,14 +125,14 @@ int main(const int argc, const char **argv) {
         goto finally;
     }
 
-    const struct fd_handler pop3 = {
-        .handle_read       = pop3_passive_accept,
-        .handle_write      = NULL,
-        .handle_close      = NULL, // nada que liberar
-    };
+    fd_handler* pop3 = malloc(sizeof(struct fd_handler));
+
+    pop3->handle_read = pop3_passive_accept;
+    pop3->handle_write = NULL;
+    pop3->handle_close = NULL;
 
     // register as reader
-    ss = selector_register(selector, server_fd, &pop3,OP_READ, NULL);
+    ss = selector_register(selector, server_fd, pop3,OP_READ, NULL);
     if(ss != SELECTOR_SUCCESS) {
         printf("unable to register socket handler\n");
         goto finally;
@@ -173,6 +173,7 @@ finally:
         printf("Servidor cerrado.\n");
     }
 
+    free(pop3);
     return ret;
 
 }

@@ -2,13 +2,56 @@
 
 #define BUFFER_SIZE 1024
 
+
+void pop3_passive_accept(struct selector_key *key) {
+    printf("Passive accept handler accessed\n");
+    struct sockaddr_storage client_addr;
+    socklen_t client_addr_len = sizeof(client_addr);
+    memset(&client_addr, 0, sizeof(client_addr));
+    int client_fd = accept(key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
+
+    if (client_fd < 0) {
+        perror("Error when accepting client connection");
+        return;
+    }
+
+    if (selector_fd_set_nio(client_fd) == -1) {
+        perror("Unable to set client socket flags");
+        close(client_fd);
+        return;
+    }
+
+    fd_handler* pop3 = malloc(sizeof(struct fd_handler));
+
+    pop3->handle_read = read_handler;
+    pop3->handle_write = write_handler;
+    pop3->handle_close = close_client;
+
+    buffer* buffer = malloc(sizeof(struct buffer));
+    uint8_t* data = malloc(sizeof(uint8_t) * BUFFER_SIZE);
+    buffer_init(buffer, BUFFER_SIZE, data);
+
+    selector_status ss = selector_register(key->s, client_fd, pop3, OP_READ, buffer);
+    if (ss != SELECTOR_SUCCESS) {
+        perror("Unable to register client socket handler");
+        free(data);
+        free(buffer);
+        close(client_fd);
+        return;
+    }
+
+    printf("Client connected\n");
+}
+
+
 void close_client(struct selector_key *key) {
     printf("Free buffer handler accessed\n");
     buffer *buffer = key->data;
     free(buffer->data);
     free(buffer);
-    close(key->fd);
+    selector_destroy(key->s);
     selector_unregister_fd(key->s, key->fd);
+    close(key->fd);
 }
 
 
@@ -77,45 +120,3 @@ void write_handler(struct selector_key *key) {
     selector_set_interest_key(key, OP_READ | OP_NOOP);
 
 }
-
-void pop3_passive_accept(struct selector_key *key) {
-    printf("Passive accept handler accessed\n");
-    struct sockaddr_storage client_addr;
-    socklen_t client_addr_len = sizeof(client_addr);
-    int client_fd = accept(key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
-
-    if (client_fd < 0) {
-        perror("Error when accepting client connection");
-        return;
-    }
-
-    if (selector_fd_set_nio(client_fd) == -1) {
-        perror("Unable to set client socket flags");
-        close(client_fd);
-        return;
-    }
-
-    const struct fd_handler pop3 = {
-        .handle_read = read_handler,
-        .handle_write = write_handler,
-        .handle_close = close_client,
-        .handle_block = NULL,
-    };
-
-    buffer* buffer = malloc(sizeof(struct buffer));
-    uint8_t* data = malloc(sizeof(uint8_t) * BUFFER_SIZE);
-    buffer_init(buffer, BUFFER_SIZE, data);
-
-    selector_status ss = selector_register(key->s, client_fd, &pop3, OP_READ, buffer);
-    if (ss != SELECTOR_SUCCESS) {
-        perror("Unable to register client socket handler");
-        free(data);
-        free(buffer);
-        close(client_fd);
-        return;
-    }
-
-    printf("Client connected\n");
-}
-
-
