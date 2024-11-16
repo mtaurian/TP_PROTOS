@@ -25,7 +25,7 @@
 #include <netinet/tcp.h>
 
 #include "../shared/include/buffer.h"
-#include "include/handlers.h"
+#include "include/pop3.h"
 #include "../shared/include/selector.h"
 
 static bool done = false;
