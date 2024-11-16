@@ -2,6 +2,11 @@
 
 #define BUFFER_SIZE 1024
 
+static const struct fd_handler client_handler = {
+    .handle_read   =  read_handler,
+    .handle_write  =  write_handler,
+    .handle_close  = close_client,
+};
 
 void pop3_passive_accept(struct selector_key *key) {
     printf("Passive accept handler accessed\n");
@@ -21,17 +26,11 @@ void pop3_passive_accept(struct selector_key *key) {
         return;
     }
 
-    fd_handler* pop3 = malloc(sizeof(struct fd_handler));
-
-    pop3->handle_read = read_handler;
-    pop3->handle_write = write_handler;
-    pop3->handle_close = close_client;
-
     buffer* buffer = malloc(sizeof(struct buffer));
     uint8_t* data = malloc(sizeof(uint8_t) * BUFFER_SIZE);
     buffer_init(buffer, BUFFER_SIZE, data);
 
-    selector_status ss = selector_register(key->s, client_fd, pop3, OP_READ, buffer);
+    selector_status ss = selector_register(key->s, client_fd, &client_handler, OP_READ, buffer);
     if (ss != SELECTOR_SUCCESS) {
         perror("Unable to register client socket handler");
         free(data);
@@ -44,13 +43,11 @@ void pop3_passive_accept(struct selector_key *key) {
 }
 
 
-void close_client(struct selector_key *key) {
+void close_client(struct selector_key * key) {
     printf("Free buffer handler accessed\n");
     buffer *buffer = key->data;
     free(buffer->data);
     free(buffer);
-    selector_destroy(key->s);
-    selector_unregister_fd(key->s, key->fd);
     close(key->fd);
 }
 
@@ -81,9 +78,9 @@ void read_handler(struct selector_key *key) {
     buffer_write_adv(buffer, bytes_received);
 
     if (buffer_can_write(buffer))
-        selector_set_interest_key(key, OP_NOOP | OP_READ | OP_WRITE);
+        selector_set_interest_key(key,  OP_READ | OP_WRITE);
 
-    selector_set_interest_key(key, OP_WRITE | OP_NOOP);
+    selector_set_interest_key(key, OP_WRITE);
 
 }
 
@@ -115,8 +112,8 @@ void write_handler(struct selector_key *key) {
     buffer_read_adv(buffer, bytes_sent);
 
     if (buffer_can_read(buffer))
-        selector_set_interest_key(key, OP_NOOP | OP_READ | OP_WRITE);
+        selector_set_interest_key(key, OP_READ | OP_WRITE);
 
-    selector_set_interest_key(key, OP_READ | OP_NOOP);
+    selector_set_interest_key(key, OP_READ);
 
 }
