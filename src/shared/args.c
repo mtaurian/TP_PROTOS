@@ -39,8 +39,8 @@ user(char *s, struct users *user) {
 
 static void
 version(void) {
-    fprintf(stderr, "socks5v version 0.0\n"
-                    "ITBA Protocolos de Comunicación 2020/1 -- Grupo X\n"
+    fprintf(stderr, "pop3 version 0.0\n"
+                    "ITBA Protocolos de Comunicación 2024/2 -- Grupo 9\n"
                     "AQUI VA LA LICENCIA\n");
 }
 
@@ -66,29 +66,23 @@ usage(const char *progname) {
         "   -P <conf port>   Puerto entrante conexiones configuracion\n"
         "   -u <name>:<pass> Usuario y contraseña de usuario que puede usar el servidor. Hasta 10.\n"
         "   -v               Imprime información sobre la versión versión y termina.\n"
-        "   -d               Carpeta donde residen los Maildirs"
+        "   -d <path>        Carpeta donde residen los Maildirs.\n"
+        "   -t <cmd>         Comando para aplicar transformaciones"
         "\n",
         progname);
     exit(1);
 }
 
 void 
-parse_args(const int argc, char **argv, struct socks5args *args) {
+parse_args(const int argc, char **argv, struct pop3args *args) {
     memset(args, 0, sizeof(*args)); // sobre todo para setear en null los punteros de users
 
-    args->socks_addr = "0.0.0.0";
-    args->socks_port = 1080;
+    args->pop3_addr = "0.0.0.0";
+    args->pop3_port = 1080;
 
     args->mng_addr   = "127.0.0.1";
     args->mng_port   = 8080;
 
-    args->disectors_enabled = true;
-
-    args->doh.host = "localhost";
-    args->doh.ip   = "127.0.0.1";
-    args->doh.port = 8053;
-    args->doh.path = "/getnsrecord";
-    args->doh.query = "?dns=";
 
     int c;
     int nusers = 0;
@@ -96,15 +90,10 @@ parse_args(const int argc, char **argv, struct socks5args *args) {
     while (true) {
         int option_index = 0;
         static struct option long_options[] = {
-            { "doh-ip",    required_argument, 0, 0xD001 },
-            { "doh-port",  required_argument, 0, 0xD002 },
-            { "doh-host",  required_argument, 0, 0xD003 },
-            { "doh-path",  required_argument, 0, 0xD004 },
-            { "doh-query", required_argument, 0, 0xD005 },
             { 0,           0,                 0, 0 }
         };
 
-        c = getopt_long(argc, argv, "hl:L:Np:P:u:v", long_options, &option_index);
+        c = getopt_long(argc, argv, "hl:L:p:P:u:vd:t:", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -113,16 +102,13 @@ parse_args(const int argc, char **argv, struct socks5args *args) {
                 usage(argv[0]);
                 break;
             case 'l':
-                args->socks_addr = optarg;
+                args->pop3_addr = optarg;
                 break;
             case 'L':
                 args->mng_addr = optarg;
                 break;
-            case 'N':
-                args->disectors_enabled = false;
-                break;
             case 'p':
-                args->socks_port = port(optarg);
+                args->pop3_port = port(optarg);
                 break;
             case 'P':
                 args->mng_port   = port(optarg);
@@ -140,20 +126,11 @@ parse_args(const int argc, char **argv, struct socks5args *args) {
                 version();
                 exit(0);
                 break;
-            case 0xD001:
-                args->doh.ip = optarg;
+            case 'd':
+                args->maildir = optarg;
                 break;
-            case 0xD002:
-                args->doh.port = port(optarg);
-                break;
-            case 0xD003:
-                args->doh.host = optarg;
-                break;
-            case 0xD004:
-                args->doh.path = optarg;
-                break;
-            case 0xD005:
-                args->doh.query = optarg;
+            case 't':
+                //TODO implementar
                 break;
             default:
                 fprintf(stderr, "unknown argument %d.\n", c);
