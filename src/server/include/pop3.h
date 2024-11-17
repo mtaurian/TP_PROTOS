@@ -18,7 +18,19 @@
 
 #include "../../shared/include/buffer.h"
 #include "../../shared/include/selector.h"
+#define ATTACHMENT(key) ((ClientData*)(key)->data)
+#define BUFFER_SIZE 2048
 
+typedef struct ClientData {
+
+    struct sockaddr_storage clientAddress;
+    bool closed;
+    int clientFd;
+
+    struct buffer clientBuffer;
+    uint8_t inClientBuffer[BUFFER_SIZE];
+
+} ClientData;
 void pop3_passive_accept(struct selector_key *key);
 
 void close_client(struct selector_key *key);
