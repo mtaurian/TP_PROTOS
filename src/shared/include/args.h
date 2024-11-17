@@ -10,25 +10,17 @@ struct users {
     char *pass;
 };
 
-struct doh {
-    char           *host;
-    char           *ip;
-    unsigned short  port;
-    char           *path;
-    char           *query;
-};
 
-struct socks5args {
-    char           *socks_addr;
-    unsigned short  socks_port;
+struct pop3args {
+    char           *pop3_addr;
+    unsigned short  pop3_port;
 
-    char *          mng_addr;
+    char           *mng_addr;
     unsigned short  mng_port;
 
-    bool            disectors_enabled;
 
-    struct doh      doh;
     struct users    users[MAX_USERS];
+    char           *maildir;
 };
 
 /**
@@ -37,7 +29,7 @@ struct socks5args {
  * la ejecución.
  */
 void 
-parse_args(const int argc, char **argv, struct socks5args *args);
+parse_args(const int argc, char **argv, struct pop3args *args);
 
 #endif
 
