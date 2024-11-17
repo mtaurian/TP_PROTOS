@@ -189,5 +189,6 @@ selector_fd_set_nio(const int fd);
 selector_status
 selector_notify_block(fd_selector s,
                  const int   fd);
-
+void
+selector_print_fds(fd_selector s);
 #endif

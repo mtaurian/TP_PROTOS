@@ -140,6 +140,7 @@ int main(const int argc, const char **argv) {
 
 
     for(;!done;) {
+        selector_print_fds(selector);
         ss = selector_select(selector);
         if(ss != SELECTOR_SUCCESS) {
             err_msg = "serving";
