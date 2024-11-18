@@ -26,7 +26,6 @@
 
 #include "../shared/include/buffer.h"
 #include "include/pop3.h"
-#include "../shared/include/selector.h"
 #include "../shared/include/args.h"
 
 static bool done = false;
