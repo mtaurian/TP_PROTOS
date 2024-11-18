@@ -1,4 +1,5 @@
 #include "include/pop3.h"
+#include "states_definition/include/auth_user.h"
 
 static const struct fd_handler client_handler = {
     .handle_read   =  read_handler,
@@ -7,12 +8,42 @@ static const struct fd_handler client_handler = {
     .handle_block = NULL,
 };
 
-void pop3_passive_accept(struct selector_key *key) {
+static const struct state_definition states[] = {
+    {
+        .state            = AUTHORIZATION_USER,
+        .on_arrival       = auth_user_on_arrival,
+        .on_departure     = auth_user_on_departure,
+        .on_read_ready    = auth_user_on_ready_to_read,
+        .on_write_ready   = auth_user_on_ready_to_write,
+    },
+    {
+        .state            = AUTHORIZATION_PASSWORD,
+        .on_arrival       = NULL,
+        .on_departure     = NULL,
+        .on_read_ready    = NULL,
+        .on_write_ready   = auth_user_on_ready_to_write, //todo change
+    },
+    {
+        .state            = TRANSACTION,
+        .on_arrival       = NULL,
+        .on_departure     = NULL,
+        .on_read_ready    = NULL,
+        .on_write_ready   = NULL,
+    },
+    {
+        .state            = UPDATE,
+        .on_arrival       = NULL,
+        .on_departure     = NULL,
+        .on_read_ready    = NULL,
+        .on_write_ready   = NULL,
+    }
+};
+void pop3_passive_accept(struct selector_key *_key) {
     const char *err_msg = NULL;
     struct sockaddr_storage client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     memset(&client_addr, 0, sizeof(client_addr));
-    int client_fd = accept(key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
+    int client_fd = accept(_key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
 
     if (client_fd < 0) {
         err_msg = "Error in accept";
@@ -23,7 +54,8 @@ void pop3_passive_accept(struct selector_key *key) {
         err_msg = "Unable to set client socket flags";
         goto finally;
     }
-    ClientData* clientData = calloc(1, sizeof(ClientData));
+
+    client_data* clientData = calloc(1, sizeof(client_data));
     if (clientData == NULL) {
         return;
     }
@@ -31,11 +63,15 @@ void pop3_passive_accept(struct selector_key *key) {
     clientData->closed = false;
     clientData->clientFd = client_fd;
     clientData->clientAddress = client_addr;
-
+    clientData->username = NULL;
+    clientData->stm.states = states;
     buffer_init(&clientData->clientBuffer, BUFFER_SIZE, clientData->inClientBuffer);
+    buffer_init(&clientData->responseBuffer, BUFFER_SIZE, clientData->inResponseBuffer);
 
-
-    selector_status ss = selector_register(key->s, client_fd, &client_handler, OP_READ, clientData);
+    clientData->stm.initial = AUTHORIZATION_USER;
+    clientData->stm.max_state = UPDATE;
+    stm_init(&clientData->stm);
+    selector_status ss = selector_register(_key->s, client_fd, &client_handler, OP_READ, clientData);
     if (ss != SELECTOR_SUCCESS) {
        err_msg = "Unable to register client socket handler";
     }
@@ -56,8 +92,8 @@ finally:
 }
 
 
-void close_client(struct selector_key * key) {
-    ClientData* data = ATTACHMENT(key);
+void close_client(struct selector_key * _key) {
+    client_data* data = ATTACHMENT(_key);
     if (data->closed)
         return;
     data->closed = true;
@@ -65,75 +101,37 @@ void close_client(struct selector_key * key) {
     int clientFd = data->clientFd;
 
     if (clientFd != -1) {
-        selector_unregister_fd(key->s, clientFd);
+        selector_unregister_fd(_key->s, clientFd);
         close(clientFd);
     }
     free(data);
 }
 
 
-void read_handler(struct selector_key *key) {
+void read_handler(struct selector_key *_key) {
     const char *err_msg = NULL;
-    ClientData *clientData = ATTACHMENT(key);
+    client_data *clientData = ATTACHMENT(_key);
 
     size_t writable_bytes;
     uint8_t *write_ptr = buffer_write_ptr(&clientData->clientBuffer, &writable_bytes);
 
     // READ from socket into buffer
-    ssize_t bytes_received = recv(key->fd, write_ptr, writable_bytes, 0);
-
-    if (bytes_received <= 0) {
-        if (bytes_received == 0) {
-            err_msg = "Client disconnected";
-        } else {
-            err_msg = "Error in recv";
-        }
-        goto leave;
-    }
-
-    buffer_write_adv(&clientData->clientBuffer, bytes_received);
-
-leave:
-    if(err_msg) {
-        perror(err_msg);
-        selector_unregister_fd(key->s, key->fd);
-        close(key->fd);
-
-    } else {
+    stm_handler_read(&clientData->stm, _key);
 
         if (buffer_can_write(&clientData->clientBuffer))
-            selector_set_interest_key(key,  OP_READ | OP_WRITE);
+            selector_set_interest_key(_key, OP_READ | OP_WRITE);
 
-        selector_set_interest_key(key, OP_WRITE);
-    }
+        selector_set_interest_key(_key, OP_WRITE);
 }
 
-void write_handler(struct selector_key *key) {
+void write_handler(struct selector_key *_key) {
     const char *err_msg = NULL;
-    ClientData *clientData = ATTACHMENT(key);
-    size_t readable_bytes;
-    uint8_t *read_ptr = buffer_read_ptr(&clientData->clientBuffer, &readable_bytes);
+    client_data *clientData = ATTACHMENT(_key);
 
-    // echo back to client
-    ssize_t bytes_sent = send(key->fd, read_ptr, readable_bytes, 0);
+    stm_handler_write(&clientData->stm, _key);
 
-    if (bytes_sent < 0) {
-        err_msg = "Error in send";
-        selector_unregister_fd(key->s, key->fd);
-        close(key->fd);
-        goto leave;
-    }
-
-    buffer_read_adv(&clientData->clientBuffer, bytes_sent);
-
-leave:
-
-    if(err_msg) {
-        perror(err_msg);
-    } else {
         if (buffer_can_read(&clientData->clientBuffer))
-            selector_set_interest_key(key, OP_READ | OP_WRITE);
+            selector_set_interest_key(_key, OP_READ | OP_WRITE);
 
-        selector_set_interest_key(key, OP_READ);
-    }
+        selector_set_interest_key(_key, OP_READ);
 }
