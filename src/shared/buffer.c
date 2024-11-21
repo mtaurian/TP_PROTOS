@@ -101,3 +101,14 @@ buffer_compact(buffer *b) {
         b->write = b->data + n;
     }
 }
+
+uint8_t
+buffer_write_string(buffer *b, uint8_t *c) {
+    uint8_t bytes_written = 0;
+    while (*c != '\0' && buffer_can_write(b)) {
+        buffer_write(b, *c);
+        c++;
+        bytes_written++;
+    }
+    return bytes_written;
+}
