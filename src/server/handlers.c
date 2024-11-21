@@ -18,3 +18,16 @@ int handle_user(struct selector_key *_key, char * username){
 void handle_quit(struct selector_key *key){
     close_client(key);
 }
+
+int handle_pass(struct selector_key *_key, char * password){
+    client_data * clientData = ATTACHMENT(_key);
+    unsigned long length = strlen(password);
+    clientData->password = malloc((length+1) * sizeof(char));
+
+    strcpy(clientData->password, password);
+
+    write_std_response(1, NULL, _key);
+
+    printf("Password: %s\n", password);  //TODO: Remove this print
+    return 1;
+}

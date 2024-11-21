@@ -77,7 +77,10 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
             break;
     }
 
-    return ret; //TODO: leak
+    free(entry->payload);
+    free(entry);
+
+    return ret;
 }
 
 unsigned int auth_user_on_ready_to_write(struct selector_key *key){

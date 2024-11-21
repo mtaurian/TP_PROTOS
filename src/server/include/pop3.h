@@ -34,6 +34,7 @@ typedef struct client_data {
     uint8_t inResponseBuffer[BUFFER_SIZE];
 
     char * username;
+    char * password;
     struct state_machine stm;
 
 } client_data;

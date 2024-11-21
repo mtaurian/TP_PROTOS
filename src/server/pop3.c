@@ -105,6 +105,9 @@ void close_client(struct selector_key * _key) {
         selector_unregister_fd(_key->s, clientFd);
         close(clientFd);
     }
+
+    free(data->password);
+    free(data->username);
     free(data);
 }
 
