@@ -63,14 +63,16 @@ void write_std_response(char isOk, char *msg, struct selector_key *key) {
     client_data *clientData = ATTACHMENT(key);
     size_t toWrite;
     if (isOk) {
-        buffer_write_string(&clientData->responseBuffer, "+OK\0");
+        buffer_write_string(&clientData->responseBuffer, "+OK \0");
     } else {
-        buffer_write_string(&clientData->responseBuffer, "-ERR\0");
+        buffer_write_string(&clientData->responseBuffer, "-ERR \0");
     }
 
     if(msg){
         buffer_write_string(&clientData->responseBuffer, msg);
     }
+
+    print_response(key);
 }
 
 

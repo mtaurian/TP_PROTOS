@@ -77,7 +77,8 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
             break;
         case QUIT_USER:
             handle_quit(key);
-            printf("+OK Goodbye\n");
+            strcpy(message, "Goodbye\n");
+            write_std_response(1,message, key);
             break;
         default:
             write_std_response(0, NULL, key);
