@@ -61,16 +61,24 @@ void auth_pass_on_departure(unsigned state, struct selector_key *key){
 
 unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
     auth_pass_request * entry = parse(key);
-    int ret = AUTHORIZATION_USER;
+    char * message = malloc(100 * sizeof(char));
+    int ret = AUTHORIZATION_PASSWORD;
 
     switch (entry->command) {
         case PASS:
             if(handle_pass(key, entry->payload)){
                 ret = AUTHORIZATION_PASSWORD;
+                strcpy(message, "Authentication successful\n");
+                write_std_response(1, message, key);
+            } else { // passwords don't match
+                strcpy(message, "Authentication failed\n");
+                write_std_response(0, message, key);
+                ret = AUTHORIZATION_USER;
             }
         break;
         case QUIT_PASS:
             handle_quit(key);
+            printf("+OK Goodbye\n");
         break;
         default:
             write_std_response(0, NULL, key);
@@ -79,6 +87,8 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
 
     free(entry->payload);
     free(entry);
+
+    free(message);
 
     return ret;
 }

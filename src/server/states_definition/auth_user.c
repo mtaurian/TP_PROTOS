@@ -61,16 +61,23 @@ void auth_user_on_departure(const unsigned state, struct selector_key *key){
 
 unsigned int auth_user_on_ready_to_read(struct selector_key *key){
     auth_user_request * entry = parse(key);
+    char * message = malloc(100 * sizeof(char));
     int ret = AUTHORIZATION_USER;
 
     switch (entry->command) {
         case USER:
             if(handle_user(key, entry->payload)){
                 ret = AUTHORIZATION_PASSWORD;
+                strcpy(message,  "User accepted\n");
+                write_std_response(1,message, key);
+            } else { // not a valid user
+                strcpy(message,  "Authentication failed\n");
+                write_std_response(0,message, key);
             }
             break;
         case QUIT_USER:
             handle_quit(key);
+            printf("+OK Goodbye\n");
             break;
         default:
             write_std_response(0, NULL, key);
@@ -79,6 +86,8 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
 
     free(entry->payload);
     free(entry);
+
+    free(message);
 
     return ret;
 }

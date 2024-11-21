@@ -63,22 +63,14 @@ void write_std_response(char isOk, char *msg, struct selector_key *key) {
     client_data *clientData = ATTACHMENT(key);
     size_t toWrite;
     if (isOk) {
-        buffer_write_string(&clientData->responseBuffer, "-OK\n\0");
+        buffer_write_string(&clientData->responseBuffer, "+OK\0");
     } else {
-        buffer_write_string(&clientData->responseBuffer, "-ERR\n\0");
+        buffer_write_string(&clientData->responseBuffer, "-ERR\0");
     }
-    // buffer_write_ptr(&clientData->responseBuffer, &toWrite);
-    // if (toWrite >= 4 && isOk){
-    //     buffer_write(&clientData->responseBuffer, '+');
-    //     buffer_write(&clientData->responseBuffer, 'O');
-    //     buffer_write(&clientData->responseBuffer, 'K');
-    //     buffer_write(&clientData->responseBuffer, msg ?  ' ' : '\n');
-    // } else if (toWrite >= 5 && !isOk) {
-    //     buffer_write(&clientData->responseBuffer, '-');
-    //     buffer_write(&clientData->responseBuffer, 'E');
-    //     buffer_write(&clientData->responseBuffer, 'R');
-    //     buffer_write(&clientData->responseBuffer, 'R');
-    //     buffer_write(&clientData->responseBuffer, msg ?  ' ' : '\n');
-    // }
-    //TODO: Add msg to response
+
+    if(msg){
+        buffer_write_string(&clientData->responseBuffer, msg);
+    }
 }
+
+

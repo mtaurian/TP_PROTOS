@@ -5,9 +5,13 @@
 int handle_user(struct selector_key *_key, char * username){
     client_data * clientData = ATTACHMENT(_key);
     unsigned long userNameLength = strlen(username);
-    clientData->username = malloc((userNameLength+1) * sizeof(char));
 
+    //TODO: compare entry with the user's password
+
+    //
+    clientData->username = malloc((userNameLength+1) * sizeof(char));
     strcpy(clientData->username, username);
+    //
 
     write_std_response(1, NULL, _key);
 
@@ -22,9 +26,13 @@ void handle_quit(struct selector_key *key){
 int handle_pass(struct selector_key *_key, char * password){
     client_data * clientData = ATTACHMENT(_key);
     unsigned long length = strlen(password);
-    clientData->password = malloc((length+1) * sizeof(char));
 
+    //TODO: compare entry with the user's password
+
+    //
+    clientData->password = malloc((length+1) * sizeof(char));
     strcpy(clientData->password, password);
+    //
 
     write_std_response(1, NULL, _key);
 
