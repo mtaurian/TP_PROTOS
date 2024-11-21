@@ -122,10 +122,10 @@ void read_handler(struct selector_key *_key) {
     // READ from socket into buffer
     stm_handler_read(&clientData->stm, _key);
 
-        if (buffer_can_write(&clientData->clientBuffer))
-            selector_set_interest_key(_key, OP_READ | OP_WRITE);
+    if (buffer_can_write(&clientData->clientBuffer))
+        selector_set_interest_key(_key, OP_READ | OP_WRITE);
 
-        selector_set_interest_key(_key, OP_WRITE);
+    selector_set_interest_key(_key, OP_WRITE);
 }
 
 void write_handler(struct selector_key *_key) {
@@ -134,8 +134,8 @@ void write_handler(struct selector_key *_key) {
 
     stm_handler_write(&clientData->stm, _key);
 
-        if (buffer_can_read(&clientData->clientBuffer))
-            selector_set_interest_key(_key, OP_READ | OP_WRITE);
+    if (buffer_can_read(&clientData->clientBuffer))
+        selector_set_interest_key(_key, OP_READ | OP_WRITE);
 
-        selector_set_interest_key(_key, OP_READ);
+    selector_set_interest_key(_key, OP_READ);
 }
