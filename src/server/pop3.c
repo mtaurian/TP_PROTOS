@@ -1,5 +1,6 @@
 #include "include/pop3.h"
 #include "states_definition/include/auth_user.h"
+#include "states_definition/include/auth_pass.h"
 
 static const struct fd_handler client_handler = {
     .handle_read   =  read_handler,
@@ -18,10 +19,10 @@ static const struct state_definition states[] = {
     },
     {
         .state            = AUTHORIZATION_PASSWORD,
-        .on_arrival       = NULL,
-        .on_departure     = NULL,
-        .on_read_ready    = NULL,
-        .on_write_ready   = auth_user_on_ready_to_write, //todo change
+        .on_arrival       = auth_pass_on_arrival,
+        .on_departure     = auth_pass_on_departure,
+        .on_read_ready    = auth_pass_on_ready_to_read,
+        .on_write_ready   = auth_pass_on_ready_to_write,
     },
     {
         .state            = TRANSACTION,
