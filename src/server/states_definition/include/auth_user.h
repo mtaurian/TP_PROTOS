@@ -4,7 +4,7 @@
 #include "../../../shared/include/selector.h"
 
 enum auth_user_commands {
-    USER = 0, QUIT
+    USER = 0, QUIT_USER
 };
 
 typedef struct auth_user_request {

@@ -34,7 +34,7 @@ static auth_user_request * parse(struct selector_key * key){
     auth_user_request *request = malloc(sizeof(auth_user_request));
 
     if(match){
-        request->command = maybeQuit ? QUIT : USER;
+        request->command = maybeQuit ? QUIT_USER : USER;
     }
 
     size_t toRead;
@@ -69,7 +69,7 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
                 ret = AUTHORIZATION_PASSWORD;
             }
             break;
-        case QUIT:
+        case QUIT_USER:
             handle_quit(key);
             break;
         default:
