@@ -115,6 +115,9 @@ void close_client(struct selector_key * _key) {
         close(clientFd);
     }
 
+    // TODO: sign out user
+
+
     free(data->password);
     free(data->username);
     free(data);
@@ -217,25 +220,20 @@ void log_out_user(struct users *user) {
 
 
 void free_pop3_server() {
+    for (int i = 0; i < server->user_amount; i++) {
+        free(server->users_list[i].name);
+        free(server->users_list[i].pass);
+    }
     free(server);
 }
 
 unsigned int validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {
         if(strcmp(server->users_list[i].name, username) == 0 && strcmp(server->users_list[i].pass, password) == 0) {
+            printf("Signed in user %s\n", username); // TODO: do as a log
             return 1;
         }
     }
-    printf("User passed: %s\n", username);
-    printf("Password passed: %s\n", password);
-
-    printf("User saved: %s\n", server->users_list[0].name );
-    printf("Password saved: %s\n", server->users_list[0].pass);
-
-    printf("Strcmp pass: %d\n", strcmp(server->users_list[0].pass, password));
-    printf("Strcmp username: %d\n", strcmp(server->users_list[0].name, username));
-
-
 
     return 0;
 }
