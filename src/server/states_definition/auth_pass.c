@@ -1,6 +1,6 @@
 #include "./include/auth_pass.h"
 
-static auth_pass_request * parse(struct selector_key * key){
+/*static auth_pass_request * pass_parse(struct selector_key * key){
     client_data * clientData= ATTACHMENT(key);
 
     uint8_t entry = buffer_read(&clientData->clientBuffer);
@@ -42,7 +42,7 @@ static auth_pass_request * parse(struct selector_key * key){
     }
     request->payload[i] = '\0';
     return request;
-}
+}*/
 
 
 void auth_pass_on_arrival(unsigned state, struct selector_key *key){
@@ -54,13 +54,19 @@ void auth_pass_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
-    auth_pass_request * entry = parse(key);
+    user_request * entry = parse(key, AUTHORIZATION_PASSWORD);
     char * message = NULL;
     int ret = AUTHORIZATION_PASSWORD;
 
+    if(entry == NULL){
+        message =  "Unknown command.\n";
+        write_std_response(0, message, key);
+        return ret;
+    }
+
     switch (entry->command) {
         case PASS:
-            if(handle_pass(key, entry->payload)){
+            if(handle_pass(key, entry->arg)){
                 ret = TRANSACTION;
                 message =  "Authentication successful\n";
                 write_std_response(1, message, key);
@@ -69,18 +75,19 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
                 write_std_response(0, message, key);
                 ret = AUTHORIZATION_USER;
             }
-        	break;
-        case QUIT_PASS:
+        break;
+        case QUIT:
             handle_quit(key);
             message =  "Goodbye\n";
             write_std_response(1,message, key);
         	break;
         default:
+            message =  "Authentication needed to run command.\n";
             write_std_response(0, NULL, key);
         	break;
     }
 
-    free(entry->payload);
+    free(entry->arg);
     free(entry);
 
     return ret;

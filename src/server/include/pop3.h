@@ -53,9 +53,9 @@ struct pop3_server {
     unsigned int user_amount;
 };
 
-enum pop3_states {
+typedef enum pop3_states {
     AUTHORIZATION_USER = 0, AUTHORIZATION_PASSWORD, TRANSACTION, UPDATE
-};
+} pop3_states;
 
 void initialize_pop3_server();
 void free_pop3_server();
