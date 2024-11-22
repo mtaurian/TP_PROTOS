@@ -58,6 +58,7 @@ enum pop3_states {
 };
 
 void initialize_pop3_server();
+void free_pop3_server();
 
 void pop3_passive_accept(struct selector_key *_key);
 

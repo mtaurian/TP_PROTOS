@@ -43,6 +43,10 @@ static const struct state_definition states[] = {
     }
 };
 
+void initialize_pop3_server() {
+    server = malloc(sizeof(struct pop3_server));
+}
+
 void pop3_passive_accept(struct selector_key *_key) {
     const char *err_msg = NULL;
     struct sockaddr_storage client_addr;
@@ -203,4 +207,9 @@ log_user(struct users *user) {
 static void
 sign_out_user(struct users *user) {
     user->logged = 0;
+}
+
+
+void free_pop3_server() {
+    free(server);
 }

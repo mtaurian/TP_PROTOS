@@ -37,6 +37,7 @@ static void sigterm_handler(const int signal) {
 }
 
 int main(const int argc,const char **argv) {
+    initialize_pop3_server();
     struct pop3args *pop3config = malloc(sizeof(*pop3config));
     parse_args(argc,argv,pop3config);
     close(0);
@@ -154,6 +155,8 @@ finally:
         printf("Servidor cerrado.\n");
     }
     free(pop3config);
+
+    free_pop3_server();
 
     return ret;
 
