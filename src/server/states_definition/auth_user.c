@@ -5,7 +5,7 @@
 #include "../../shared/include/parser_utils.h"
 #include "../include/pop3.h"
 
-static auth_user_request * parse(struct selector_key * key){
+/*static auth_user_request * user_parse(struct selector_key * key){
     client_data * clientData= ATTACHMENT(key);
 
     uint8_t entry = buffer_read(&clientData->clientBuffer);
@@ -47,7 +47,7 @@ static auth_user_request * parse(struct selector_key * key){
     }
     request->payload[i] = '\0';
     return request;
-}
+}*/
 
 void auth_user_on_arrival(const unsigned state, struct selector_key *key){
     printf("Entered in AUTH_USER state\n");
@@ -58,14 +58,21 @@ void auth_user_on_departure(const unsigned state, struct selector_key *key){
 }
 
 unsigned int auth_user_on_ready_to_read(struct selector_key *key){
-  	client_data *clientData = ATTACHMENT(key);
-    auth_user_request * entry = parse(key);
+    client_data *clientData = ATTACHMENT(key);
+    user_request * entry = parse(key, AUTHORIZATION_USER);
+
     char * message = NULL;
     int ret = AUTHORIZATION_USER;
 
+    if(entry == NULL){
+        message =  "Unknown command.\n";
+        write_std_response(0, message, key);
+        return ret;
+    }
+
     switch (entry->command) {
         case USER:
-            if(handle_user(key, entry->payload)){
+            if(handle_user(key, entry->arg)){
                 ret = AUTHORIZATION_PASSWORD;
                 message =  "User accepted\n";
                 write_std_response(1,message, key);
@@ -75,17 +82,21 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
             }
 
             break;
-        case QUIT_USER:
+        case QUIT:
             handle_quit(key);
             message =  "Goodbye\n";
             write_std_response(1,message, key);
             break;
+        case PASS:
+            message =  "No username given.\n";
+            write_std_response(0,message, key);
         default:
+            message =  "Authentication needed to run command.\n";
             write_std_response(0, NULL, key);
             break;
     }
 
-    free(entry->payload);
+    free(entry->arg);
     free(entry);
 
     return ret;
