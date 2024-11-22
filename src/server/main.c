@@ -25,8 +25,8 @@
 #include <netinet/tcp.h>
 
 #include "../shared/include/buffer.h"
-#include "include/pop3.h"
 #include "../shared/include/args.h"
+#include "../server/include/pop3.h"
 
 static bool done = false;
 
@@ -37,7 +37,6 @@ static void sigterm_handler(const int signal) {
 }
 
 int main(const int argc,const char **argv) {
-
     struct pop3args *pop3config = malloc(sizeof(*pop3config));
     parse_args(argc,argv,pop3config);
     close(0);
@@ -149,8 +148,6 @@ finally:
         selector_destroy(selector);
     }
     selector_close();
-
-    // socksv5_pool_destroy();
 
     if(server_fd >= 0) {
         close(server_fd);

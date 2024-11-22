@@ -3,14 +3,6 @@
 
 #include <stdbool.h>
 
-#define MAX_USERS 10
-
-struct users {
-    char *name;
-    char *pass;
-};
-
-
 struct pop3args {
     char           *pop3_addr;
     unsigned short  pop3_port;
@@ -18,8 +10,6 @@ struct pop3args {
     char           *mng_addr;
     unsigned short  mng_port;
 
-
-    struct users    users[MAX_USERS];
     char           *maildir;
 };
 

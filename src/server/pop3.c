@@ -3,6 +3,8 @@
 #include "states_definition/include/auth_pass.h"
 #include "states_definition/include/transaction.h"
 
+static struct pop3_server * server;
+
 static const struct fd_handler client_handler = {
     .handle_read   =  read_handler,
     .handle_write  =  write_handler,
@@ -40,6 +42,7 @@ static const struct state_definition states[] = {
         .on_write_ready   = NULL,
     }
 };
+
 void pop3_passive_accept(struct selector_key *_key) {
     const char *err_msg = NULL;
     struct sockaddr_storage client_addr;
@@ -174,4 +177,30 @@ leave:
     } else {
         selector_set_interest_key(_key, OP_READ);
     }
+}
+
+
+void user(char *s, unsigned int nusers) {
+    struct users *user = server->users_list + nusers;
+    char *p = strchr(s, ':');
+    if(p == NULL) {
+        fprintf(stderr, "password not found\n");
+        exit(1);
+    } else {
+        *p = 0;
+        p++;
+        user->name = s;
+        user->pass = p;
+        user->logged = 0;
+    }
+}
+
+static void
+log_user(struct users *user) {
+    user->logged = 1;
+}
+
+static void
+sign_out_user(struct users *user) {
+    user->logged = 0;
 }

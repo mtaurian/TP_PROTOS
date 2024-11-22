@@ -2,6 +2,10 @@
 #define TP_PROTOS_AUTH_USER_H
 
 #include "../../../shared/include/selector.h"
+#include "../../include/pop3.h"
+#include "../../include/handlers.h"
+#include "utils.h"
+#include "../../../shared/include/parser_utils.h"
 
 enum auth_user_commands {
     USER = 0, QUIT_USER

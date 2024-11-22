@@ -1,9 +1,5 @@
-
 #include "include/auth_user.h"
-#include "../include/handlers.h"
-#include "include/utils.h"
-#include "../../shared/include/parser_utils.h"
-#include "../include/pop3.h"
+
 
 static auth_user_request * parse(struct selector_key * key){
     client_data * clientData= ATTACHMENT(key);
@@ -67,8 +63,7 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
         case USER:
             if(handle_user(key, entry->payload)){
                 ret = AUTHORIZATION_PASSWORD;
-                message =  "User accepted\n";
-                write_std_response(1,message, key);
+                write_std_response(1,NULL, key);
             } else { // not a valid user
                 message =  "Authentication failed\n";
                 write_std_response(0,message, key);

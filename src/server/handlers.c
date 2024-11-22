@@ -1,6 +1,5 @@
 #include "include/handlers.h"
-#include "include/pop3.h"
-#include "states_definition/include/utils.h"
+
 
 int handle_user(struct selector_key *_key, char * username){
     client_data * clientData = ATTACHMENT(_key);
@@ -35,3 +34,34 @@ int handle_pass(struct selector_key *_key, char * password){
     printf("Password: %s\n", password);  //TODO: Remove this print
     return 1;
 }
+
+int handle_stat(struct selector_key *_key){
+  printf("STAT\n");
+  return 1;
+}
+
+int handle_list(struct selector_key *_key, char * mail_number){
+  printf("LIST\n");
+  return 1;
+}
+
+int handle_retr(struct selector_key *_key, char * mail_number){
+  printf("RETR\n");
+  return 1;
+}
+
+int handle_dele(struct selector_key *_key, char * mail_number){
+  printf("DELE\n");
+  return 1;
+}
+
+int handle_noop(struct selector_key *_key){
+  printf("NOOP\n");
+  return 1;
+}
+
+int handle_rset(struct selector_key *_key){
+  printf("RSET\n");
+  return 1;
+}
+

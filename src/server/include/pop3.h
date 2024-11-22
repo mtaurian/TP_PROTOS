@@ -1,5 +1,5 @@
-#ifndef HANDLERS_H
-#define HANDLERS_H
+#ifndef POP3_H
+#define POP3_H
 
 
 #include <stdio.h>
@@ -21,8 +21,16 @@
 #define ATTACHMENT(key) ((client_data*)(key)->data)
 #define BUFFER_SIZE 2048
 
-typedef struct client_data {
+#define MAX_USERS 10
 
+struct users {
+    char *name;
+    char *pass;
+    unsigned int logged;
+};
+
+
+typedef struct client_data {
     struct sockaddr_storage clientAddress;
     bool closed;
     int clientFd;
@@ -39,13 +47,23 @@ typedef struct client_data {
 
 } client_data;
 
+
+struct pop3_server {
+    struct users users_list[MAX_USERS];
+    unsigned int user_amount;
+};
+
 enum pop3_states {
     AUTHORIZATION_USER = 0, AUTHORIZATION_PASSWORD, TRANSACTION, UPDATE
 };
+
+void initialize_pop3_server();
 
 void pop3_passive_accept(struct selector_key *_key);
 
 void close_client(struct selector_key *_key);
 void read_handler(struct selector_key *_key);
 void write_handler(struct selector_key *_key);
-#endif //HANDLERS_H
+
+void user(char *s, unsigned int nusers);
+#endif //POP3_H

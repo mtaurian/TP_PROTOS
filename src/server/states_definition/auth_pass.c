@@ -1,8 +1,4 @@
 #include "./include/auth_pass.h"
-#include "../include/handlers.h"
-#include "include/utils.h"
-#include "../../shared/include/parser_utils.h"
-#include "../include/pop3.h"
 
 static auth_pass_request * parse(struct selector_key * key){
     client_data * clientData= ATTACHMENT(key);

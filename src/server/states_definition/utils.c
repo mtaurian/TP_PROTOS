@@ -1,4 +1,3 @@
-#include "../include/pop3.h"
 #include "include/utils.h"
 
 void write_std_response(char isOk, char *msg, struct selector_key *key) {

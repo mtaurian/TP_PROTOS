@@ -2,6 +2,10 @@
 #define TRANSACTION_H
 
 #include "../../../shared/include/selector.h"
+#include "../../include/pop3.h"
+#include "../../include/handlers.h"
+#include "utils.h"
+#include "../../../shared/include/parser_utils.h"
 
 enum transaction_commands {
     STAT = 0, LIST, RETR, DELE, NOOP, RSET, QUIT_TRANSACTION
