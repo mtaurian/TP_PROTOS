@@ -70,6 +70,8 @@ void write_std_response(char isOk, char *msg, struct selector_key *key) {
 
     if(msg){
         buffer_write_string(&clientData->responseBuffer, msg);
+    } else {
+    	buffer_write_string(&clientData->responseBuffer, "\n");
     }
 
     print_response(key);

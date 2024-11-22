@@ -13,7 +13,6 @@ int handle_user(struct selector_key *_key, char * username){
     strcpy(clientData->username, username);
     //
 
-    write_std_response(1, NULL, _key);
 
     printf("Username set: %s\n", username);
     return 1;
@@ -34,7 +33,6 @@ int handle_pass(struct selector_key *_key, char * password){
     strcpy(clientData->password, password);
     //
 
-    write_std_response(1, NULL, _key);
 
     printf("Password: %s\n", password);  //TODO: Remove this print
     return 1;

@@ -75,21 +75,20 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
                 write_std_response(0, message, key);
                 ret = AUTHORIZATION_USER;
             }
-        break;
+        	break;
         case QUIT_PASS:
             handle_quit(key);
             message =  "Goodbye\n";
             write_std_response(1,message, key);
-        break;
+        	break;
         default:
             write_std_response(0, NULL, key);
-        break;
+        	break;
     }
 
     free(entry->payload);
     free(entry);
 
-    free(message);
 
     return ret;
 }
