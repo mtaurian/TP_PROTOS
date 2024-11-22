@@ -8,8 +8,6 @@
 static auth_user_request * parse(struct selector_key * key){
     client_data * clientData= ATTACHMENT(key);
 
-    fd_to_client_buffer(clientData, key);
-
     uint8_t entry = buffer_read(&clientData->clientBuffer);
 
     //TODO: Change all this command compares to parse_utils :)
@@ -60,6 +58,7 @@ void auth_user_on_departure(const unsigned state, struct selector_key *key){
 }
 
 unsigned int auth_user_on_ready_to_read(struct selector_key *key){
+  	client_data *clientData = ATTACHMENT(key);
     auth_user_request * entry = parse(key);
     char * message = NULL;
     int ret = AUTHORIZATION_USER;
@@ -93,7 +92,6 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
 }
 
 unsigned int auth_user_on_ready_to_write(struct selector_key *key){
-    print_response(key);
     return ATTACHMENT(key)->stm.current->state;
 }
 

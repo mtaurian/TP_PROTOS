@@ -7,8 +7,6 @@
 static auth_pass_request * parse(struct selector_key * key){
     client_data * clientData= ATTACHMENT(key);
 
-    fd_to_client_buffer(clientData, key);
-
     uint8_t entry = buffer_read(&clientData->clientBuffer);
 
     //TODO: Change all this command compares to parse_utils :)
@@ -89,10 +87,9 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
     free(entry->payload);
     free(entry);
 
-
     return ret;
 }
 
 unsigned int auth_pass_on_ready_to_write(struct selector_key *key){
-    return 0;
+    return ATTACHMENT(key)->stm.current->state;
 }

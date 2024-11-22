@@ -13,7 +13,6 @@ int handle_user(struct selector_key *_key, char * username){
     strcpy(clientData->username, username);
     //
 
-
     printf("Username set: %s\n", username);
     return 1;
 }
@@ -32,7 +31,6 @@ int handle_pass(struct selector_key *_key, char * password){
     clientData->password = malloc((length+1) * sizeof(char));
     strcpy(clientData->password, password);
     //
-
 
     printf("Password: %s\n", password);  //TODO: Remove this print
     return 1;

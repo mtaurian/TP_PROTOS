@@ -1,6 +1,7 @@
 #include "include/pop3.h"
 #include "states_definition/include/auth_user.h"
 #include "states_definition/include/auth_pass.h"
+#include "states_definition/include/transaction.h"
 
 static const struct fd_handler client_handler = {
     .handle_read   =  read_handler,
@@ -26,10 +27,10 @@ static const struct state_definition states[] = {
     },
     {
         .state            = TRANSACTION,
-        .on_arrival       = NULL,
-        .on_departure     = NULL,
-        .on_read_ready    = NULL,
-        .on_write_ready   = NULL,
+        .on_arrival       = transaction_on_arrival,
+        .on_departure     = transaction_on_departure,
+        .on_read_ready    = transaction_on_ready_to_read,
+        .on_write_ready   = transaction_on_ready_to_write,
     },
     {
         .state            = UPDATE,
@@ -120,12 +121,30 @@ void read_handler(struct selector_key *_key) {
     uint8_t *write_ptr = buffer_write_ptr(&clientData->clientBuffer, &writable_bytes);
 
     // READ from socket into buffer
+    ssize_t bytes_received = recv(_key->fd, write_ptr, writable_bytes, 0);
+
+    if (bytes_received <= 0) {
+        if (bytes_received == 0) {
+            err_msg = "Client disconnected";
+        } else {
+            err_msg = "Error in recv";
+        }
+        goto leave;
+    }
+
+    buffer_write_adv(&clientData->clientBuffer, bytes_received);
+
+    // READ from socket into buffer
     stm_handler_read(&clientData->stm, _key);
 
-    if (buffer_can_write(&clientData->clientBuffer))
-        selector_set_interest_key(_key, OP_READ | OP_WRITE);
-
-    selector_set_interest_key(_key, OP_WRITE);
+    leave:
+        if (err_msg) {
+            perror(err_msg);
+            selector_unregister_fd(_key->s, _key->fd);
+            close(_key->fd);
+        } else {
+            selector_set_interest_key(_key, OP_WRITE);
+        }
 }
 
 void write_handler(struct selector_key *_key) {
@@ -134,8 +153,25 @@ void write_handler(struct selector_key *_key) {
 
     stm_handler_write(&clientData->stm, _key);
 
-    if (buffer_can_read(&clientData->clientBuffer))
-        selector_set_interest_key(_key, OP_READ | OP_WRITE);
+    size_t readable_bytes;
+    uint8_t *read_ptr = buffer_read_ptr(&clientData->responseBuffer, &readable_bytes);
 
-    selector_set_interest_key(_key, OP_READ);
+    ssize_t bytes_sent = send(_key->fd, read_ptr, readable_bytes, 0);
+
+    if (bytes_sent < 0) {
+        err_msg = "Error in send";
+        selector_unregister_fd(_key->s, _key->fd);
+        close(_key->fd);
+        goto leave;
+    }
+
+    buffer_read_adv(&clientData->responseBuffer, bytes_sent);
+
+leave:
+
+    if (err_msg) {
+        perror(err_msg);
+    } else {
+        selector_set_interest_key(_key, OP_READ);
+    }
 }
