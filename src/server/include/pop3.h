@@ -39,13 +39,14 @@ typedef struct client_data {
 
 } client_data;
 
-enum pop3_states {
+typedef enum pop3_states {
     AUTHORIZATION_USER = 0, AUTHORIZATION_PASSWORD, TRANSACTION, UPDATE
-};
+} pop3_states;
 
 void pop3_passive_accept(struct selector_key *_key);
 
 void close_client(struct selector_key *_key);
 void read_handler(struct selector_key *_key);
 void write_handler(struct selector_key *_key);
+
 #endif //HANDLERS_H
