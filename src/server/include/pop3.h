@@ -66,5 +66,9 @@ void close_client(struct selector_key *_key);
 void read_handler(struct selector_key *_key);
 void write_handler(struct selector_key *_key);
 
-void user(char *s, unsigned int nusers);
+void user(char *s);
+void log_out_user(struct users *user);
+void log_user(struct users *user);
+unsigned int validate_user(char *username, char *password);
+
 #endif //POP3_H

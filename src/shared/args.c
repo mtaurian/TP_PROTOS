@@ -107,7 +107,7 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
                     fprintf(stderr, "maximun number of command line users reached: %d.\n", MAX_USERS);
                     exit(1);
                 } else {
-                    user(optarg, nusers);
+                    user(optarg);
                     nusers++;
                 }
                 break;
