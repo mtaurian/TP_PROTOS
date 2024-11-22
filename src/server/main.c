@@ -36,7 +36,7 @@ static void sigterm_handler(const int signal) {
     done = true;
 }
 
-int main(const int argc,const char **argv) {
+int main(const int argc,char **argv) {
     initialize_pop3_server();
     struct pop3args *pop3config = malloc(sizeof(*pop3config));
     parse_args(argc,argv,pop3config);
