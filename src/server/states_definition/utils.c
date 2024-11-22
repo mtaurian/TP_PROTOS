@@ -86,8 +86,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
 
     client_data * clientData= ATTACHMENT(key);
 
-    fd_to_client_buffer(clientData, key);
-
     char * command_entry = malloc(MAX_COMMAND_SIZE + 1);
     uint8_t entry;
     int command_index = 0;
@@ -114,7 +112,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
     }
 
     if(!has_command_been_found) {
-        printf("free 1\n");
         free(command_entry);
         return NULL;
     }
@@ -126,7 +123,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         }
     }
     if(!request->is_allowed){
-        printf("free 2\n");
         free(command_entry);
         return request;
     }
@@ -140,14 +136,12 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         entry = buffer_read(&clientData->clientBuffer);
         request->arg = malloc((param+1) * sizeof(uint8_t));
         int i;
-        for(i = 0; entry && i < param; i++){
+        for(i = 0; entry != '\r' && entry != '\n' && i < param; i++){
             request->arg[i] = (char) entry;
             entry = buffer_read(&clientData->clientBuffer);
         }
         request->arg[i] = '\0';
     }
-    printf("free 3\n");
-        printf("free 4\n");
 
     free(command_entry);
 

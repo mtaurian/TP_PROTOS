@@ -38,8 +38,6 @@ typedef struct user_request {
     char * arg;
 } user_request;
 
-void print_response(struct selector_key * key);
-void fd_to_client_buffer(client_data * clientData, struct selector_key * key);
 void write_std_response(char isOk, char * msg, struct selector_key * key);
 
 
