@@ -1,22 +1,5 @@
 #include "include/utils.h"
 
-void write_std_response(char isOk, char *msg, struct selector_key *key) {
-    client_data *clientData = ATTACHMENT(key);
-    size_t toWrite;
-
-    if (isOk) {
-        buffer_write_string(&clientData->responseBuffer, "+OK ");
-    } else {
-        buffer_write_string(&clientData->responseBuffer, "-ERR ");
-    }
-
-    if(msg){
-        buffer_write_string(&clientData->responseBuffer, msg);
-    } else {
-    	buffer_write_string(&clientData->responseBuffer, "\n");
-    }
-}
-
 struct command_struct auth_user_commands[AUTH_COMMAND_AMOUNT] = {
     { .string = "user", .command = USER },
     { .string = "quit", .command = QUIT }
@@ -104,7 +87,7 @@ user_request * parse(struct selector_key * key, pop3_states state) {
 
     //Find if there is a command that matches the request
     for(int i = 0 ; i < COMMAND_AMOUNT ; i++){
-        if(strcmp(all_commands[i].string, command_entry) == 0) {
+        if(strcmp(all_commands[i].string, toLower(command_entry)) == 0) {
             has_command_been_found = TRUE;
             request->command = all_commands[i].command;
         }
@@ -133,9 +116,12 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         buffer_read_ptr(&clientData->clientBuffer, &param);
 
         entry = buffer_read(&clientData->clientBuffer);
+        if(entry == ' '){
+            entry = buffer_read(&clientData->clientBuffer);
+        }
         request->arg = malloc((param+1) * sizeof(uint8_t));
         int i;
-        for(i = 0; entry != '\r' && entry != '\n' && i < param; i++){
+        for(i = 0; entry != '\r' && entry != '\n' && entry != ' ' && i < param; i++){
             request->arg[i] = (char) entry;
             entry = buffer_read(&clientData->clientBuffer);
         }
@@ -145,4 +131,28 @@ user_request * parse(struct selector_key * key, pop3_states state) {
     free(command_entry);
 
     return request;
+}
+
+void write_std_response(char isOk, char *msg, struct selector_key *key) {
+    client_data *clientData = ATTACHMENT(key);
+    size_t toWrite;
+
+    if (isOk) {
+        buffer_write_string(&clientData->responseBuffer, "+OK ");
+    } else {
+        buffer_write_string(&clientData->responseBuffer, "-ERR ");
+    }
+
+    if(msg){
+        buffer_write_string(&clientData->responseBuffer, msg);
+    } else {
+    	buffer_write_string(&clientData->responseBuffer, "\n");
+    }
+}
+
+char * toLower(char * str) {
+    for(int i = 0; str[i]; i++){
+        str[i] = tolower(str[i]);
+    }
+    return str;
 }

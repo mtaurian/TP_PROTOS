@@ -1,6 +1,7 @@
 #ifndef TP_PROTOS_UTILS_H
 #define TP_PROTOS_UTILS_H
 
+#include <ctype.h>
 #include "../../include/pop3.h"
 
 #define STATES_AMOUNT 4
@@ -38,13 +39,18 @@ typedef struct user_request {
     char * arg;
 } user_request;
 
-void write_std_response(char isOk, char * msg, struct selector_key * key);
-
-
 /*
     Parses user's request and returns a user_request or NULL if command not found
 */
 user_request * parse(struct selector_key * key, pop3_states state);
+
+void write_std_response(char isOk, char * msg, struct selector_key * key);
+
+
+/*
+    Converts a string to lower case
+*/
+char * toLower(char * str);
 
 
 #endif //TP_PROTOS_UTILS_H
