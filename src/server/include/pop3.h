@@ -31,7 +31,8 @@ typedef struct mail {
 
 typedef struct t_mailbox {
     mail *mails;
-    int mail_count;
+    size_t mails_size; // size sum of mails not marked as deleted
+    int mail_count; // mails that are not marked as deleted
     int deleted_count;
 } t_mailbox;
 

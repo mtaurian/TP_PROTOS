@@ -10,7 +10,7 @@ void transaction_on_departure(unsigned state, struct selector_key *key){
 
 unsigned int transaction_on_ready_to_read(struct selector_key *key){
   	user_request * entry = parse(key, TRANSACTION);
-  	char * message = NULL;
+    char * message = malloc(MAX_RESPONSE_SIZE);
   	int ret = TRANSACTION;
 
   	const char * statCmd = "STAT";
@@ -27,11 +27,10 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		handle_stat(key);
       		break;
     	case LIST:
-      		if(handle_list(key, entry->arg)){
-
-      		} else { // error
-
-      	    }
+      		if(!handle_list(key, entry->arg)){
+                snprintf(message, MAX_RESPONSE_SIZE, "no such message, only %d %s in maildrop\r\n", ATTACHMENT(key)->user->mailbox->mail_count, ATTACHMENT(key)->user->mailbox->mail_count > 1 ? "messages" : "message");
+				write_std_response(0, message, key);
+      		}
       		break;
     	case RETR:
       		if(handle_retr(key, entry->arg)){
@@ -59,7 +58,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		break;
     	case QUIT:
      		handle_quit(key);
-     		message =  "Goodbye\n";
+     		snprintf(message, MAX_RESPONSE_SIZE, "Goodbye\n");
       		write_std_response(1,message, key);
       		break;
     	default:
@@ -70,6 +69,8 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
   	if(entry->arg){
     	free(entry->arg);
   	}
+
+    free(message);
   	free(entry);
 
   	return ret;

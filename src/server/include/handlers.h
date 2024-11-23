@@ -4,6 +4,8 @@
 #include "../../shared/include/selector.h"
 #include "../states_definition/include/utils.h"
 
+#define MAX_RESPONSE_SIZE 1024
+
 void handle_quit(struct selector_key *key);
 
 int handle_user(struct selector_key *key, char * username);

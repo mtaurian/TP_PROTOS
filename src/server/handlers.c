@@ -32,28 +32,50 @@ int handle_pass(struct selector_key *key, char * password){
 
 int handle_stat(struct selector_key *key){
   	client_data * clientData = ATTACHMENT(key);
-    int total_size = 0;
 	int visible_mails = 0; // mails that are not marked as deleted
     t_mailbox * mailbox = clientData->user->mailbox;
 
-
-    for (int i = 0; i < mailbox->mail_count; i++) {
-        if (!mailbox->mails[i].deleted) {
-            total_size += mailbox->mails[i].size;
-            visible_mails++;
-        }
-    }
-
-
     char response[128];
-    snprintf(response, sizeof(response), "%d %d\r\n", visible_mails, total_size);
+    snprintf(response, sizeof(response), "%d %zd\r\n", clientData->user->mailbox->mail_count - clientData->user->mailbox->deleted_count , clientData->user->mailbox->mails_size);
     write_std_response(1,response, key);
   	return 1;
 }
 
 int handle_list(struct selector_key *key, char * mail_number){
-  	printf("LIST\n");
-  	return 1;
+  	int mail_id = atoi(mail_number);
+    client_data * clientData = ATTACHMENT(key);
+    t_mailbox * mailbox = clientData->user->mailbox;
+
+    char *response = malloc(MAX_RESPONSE_SIZE);
+
+    if (mail_id > 0) {
+        if (mail_id <= mailbox->mail_count && !mailbox->mails[mail_id - 1].deleted) {
+            snprintf(response, sizeof(response), "%d %zu\r\n", mail_id, mailbox->mails[mail_id - 1].size);
+            write_std_response(1,response, key);
+        } else {
+            free(response);
+          	return 0;
+        }
+        free(response);
+        return 1;
+    }
+
+    snprintf(response, MAX_RESPONSE_SIZE, "%d messages (%zu octets)\r\n", mailbox->mail_count, mailbox->mails_size);
+
+	for (int i = 0; i < mailbox->mail_count; i++) {
+    	if (!mailbox->mails[i].deleted) {
+        	char mail_info[50];
+        	snprintf(mail_info, sizeof(mail_info), "%d %zu\r\n", mailbox->mails[i].id, mailbox->mails[i].size);
+        	strcat(response, mail_info);
+    	}
+	}
+    strcat(response, ".\r\n");
+
+	write_std_response(1, response, key);
+
+    free(response);
+
+	return 1;
 }
 
 int handle_retr(struct selector_key *key, char * mail_number){

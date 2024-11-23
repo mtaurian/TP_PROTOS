@@ -233,6 +233,9 @@ void user(char *s) {
 
         user->mailbox = malloc(sizeof(t_mailbox));
         user->mailbox->mails = NULL;
+        user->mailbox->mail_count = 0;
+        user->mailbox->mails_size = 0;
+        user->mailbox->deleted_count = 0;
     }
 }
 
@@ -281,6 +284,7 @@ unsigned int load_mailbox(user_data *user) {
 
     struct dirent *entry;
     int count = 0;
+    size_t total_size = 0;
     while ((entry = readdir(dir)) != NULL && count < MAX_MAILS) {
         if (entry->d_type == DT_REG) {
             mail *mail = &user->mailbox->mails[count];
@@ -300,13 +304,14 @@ unsigned int load_mailbox(user_data *user) {
                 closedir(dir);
                 return 0;   // TODO: error handling, failing to load an email
             }
-
+            total_size += mail->size;
             count++;
         }
     }
 
     closedir(dir);
     user->mailbox->mail_count = count;
+    user->mailbox->mails_size = total_size;
     return 1;
 }
 

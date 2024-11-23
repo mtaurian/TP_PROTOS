@@ -67,10 +67,10 @@ user_request * parse(struct selector_key * key, pop3_states state) {
     }
 
     client_data * clientData= ATTACHMENT(key);
-
-    char * command_entry = malloc(MAX_COMMAND_SIZE + 1);
-    uint8_t entry;
     int command_index = 0;
+    char command_entry[MAX_COMMAND_SIZE + 1];
+
+    uint8_t entry;
     do {
         entry = buffer_read(&clientData->clientBuffer);
         command_entry[command_index] = entry;
@@ -84,6 +84,7 @@ user_request * parse(struct selector_key * key, pop3_states state) {
 
     // Find the valid command
     user_request * request = malloc(sizeof(user_request));
+    request->arg = NULL;
 
     //Find if there is a command that matches the request
     for(int i = 0 ; i < COMMAND_AMOUNT  && !has_command_been_found; i++){
@@ -95,8 +96,7 @@ user_request * parse(struct selector_key * key, pop3_states state) {
 
     if(!has_command_been_found) {
         free(command_entry);
-        free(request);
-        return NULL;
+        return request;
     }
 
     //Was this a valid command in the current state?
@@ -110,7 +110,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         return request;
     }
     
-	request->arg = NULL;
     //Get the arguments if needed
     if (all_commands[(int) request->command].has_params || request->command == LIST) {
         size_t param;
