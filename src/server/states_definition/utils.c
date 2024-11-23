@@ -95,7 +95,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
     }
 
     if(!has_command_been_found) {
-        free(command_entry);
         return request;
     }
 
@@ -106,7 +105,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         }
     }
     if(!request->is_allowed){
-        free(command_entry);
         return request;
     }
     
@@ -127,8 +125,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         }
         request->arg[i] = '\0';
     }
-
-    free(command_entry);
 
     return request;
 }
