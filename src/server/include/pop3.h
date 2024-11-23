@@ -20,6 +20,20 @@
 
 #define ATTACHMENT(key) ((client_data*)(key)->data)
 #define BUFFER_SIZE 2048
+#define MAX_MAILS 100
+
+typedef struct mail {
+    int id;
+    char *filename;
+    size_t size;
+    int deleted;
+} mail;
+
+typedef struct mailbox {
+    mail *mails;
+    int mail_count;
+    int deleted_count;
+} mailbox;
 
 #define MAX_USERS 10
 
@@ -27,6 +41,7 @@ typedef struct user_data {
     char *name;
     char *pass;
     unsigned int logged;
+    mailbox *mailbox;
 } user_data;
 
 
@@ -59,6 +74,8 @@ typedef enum pop3_states {
     AUTHORIZATION_USER = 0, AUTHORIZATION_PASSWORD, TRANSACTION, UPDATE
 } pop3_states;
 
+
+
 void initialize_pop3_server();
 void free_pop3_server();
 
@@ -72,5 +89,12 @@ void user(char *s);
 void log_out_user(user_data *user);
 unsigned int log_user(user_data *user);
 user_data * validate_user(char *username, char *password);
+void free_user_data(user_data *user);
 
+unsigned int load_mailbox(user_data *user);
+void free_mailbox(mailbox* mails);
+
+
+// could be in a utils file
+size_t get_file_size(const char *filename);
 #endif //POP3_H
