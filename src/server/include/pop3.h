@@ -23,11 +23,11 @@
 
 #define MAX_USERS 10
 
-struct users {
+typedef struct user_data {
     char *name;
     char *pass;
     unsigned int logged;
-};
+} user_data;
 
 
 typedef struct client_data {
@@ -35,21 +35,23 @@ typedef struct client_data {
     bool closed;
     int clientFd;
 
-    struct buffer clientBuffer;
+    buffer clientBuffer;
     uint8_t inClientBuffer[BUFFER_SIZE];
 
-    struct buffer responseBuffer;
+    buffer responseBuffer;
     uint8_t inResponseBuffer[BUFFER_SIZE];
 
     char * username;
     char * password;
+
+    user_data * user;
     struct state_machine stm;
 
 } client_data;
 
 
 struct pop3_server {
-    struct users users_list[MAX_USERS];
+    user_data users_list[MAX_USERS];
     unsigned int user_amount;
 };
 
@@ -67,8 +69,8 @@ void read_handler(struct selector_key *_key);
 void write_handler(struct selector_key *_key);
 
 void user(char *s);
-void log_out_user(struct users *user);
-void log_user(struct users *user);
-unsigned int validate_user(char *username, char *password);
+void log_out_user(user_data *user);
+unsigned int log_user(user_data *user);
+user_data * validate_user(char *username, char *password);
 
 #endif //POP3_H

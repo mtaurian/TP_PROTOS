@@ -115,8 +115,7 @@ void close_client(struct selector_key * _key) {
         close(clientFd);
     }
 
-    // TODO: sign out user
-
+    log_out_user(data->user);
 
     free(data->password);
     free(data->username);
@@ -189,7 +188,7 @@ leave:
 
 
 void user(char *s) {
-    struct users *user = &server->users_list[server->user_amount];
+    user_data *user = &server->users_list[server->user_amount];
     char *p = strchr(s, ':');
     if(p == NULL) {
         fprintf(stderr, "password not found\n");
@@ -210,11 +209,15 @@ void user(char *s) {
     }
 }
 
-void log_user(struct users *user) {
+unsigned int log_user(user_data *user) {
+    if(user->logged) { // someone is already logged in
+        return 0;
+    }
     user->logged = 1;
+    return 1;
 }
 
-void log_out_user(struct users *user) {
+void log_out_user(user_data *user) {
     user->logged = 0;
 }
 
@@ -227,13 +230,13 @@ void free_pop3_server() {
     free(server);
 }
 
-unsigned int validate_user(char *username, char *password) {
+
+user_data *validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {
         if(strcmp(server->users_list[i].name, username) == 0 && strcmp(server->users_list[i].pass, password) == 0) {
             printf("Signed in user %s\n", username); // TODO: do as a log
-            return 1;
+            return &server->users_list[i];
         }
     }
-
-    return 0;
+    return NULL;
 }

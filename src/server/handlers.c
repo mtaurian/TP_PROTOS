@@ -23,11 +23,10 @@ int handle_pass(struct selector_key *_key, char * password){
     clientData->password = malloc((length+1) * sizeof(char));
     strcpy(clientData->password, password);
 
-    if(validate_user(clientData->username, clientData->password)){
+    clientData->user = validate_user(clientData->username, clientData->password);
+    if(clientData->user && log_user(clientData->user)){
         return 1;
     }
-
-    printf("Password: %s\n", password);  //TODO: Remove this print
     return 0;
 }
 
