@@ -231,7 +231,7 @@ void user(char *s) {
         user->logged = 0;
         server->user_amount++;
 
-        user->mailbox = malloc(sizeof(mailbox));
+        user->mailbox = malloc(sizeof(t_mailbox));
         user->mailbox->mails = NULL;
     }
 }
@@ -321,7 +321,7 @@ size_t get_file_size(const char *filename) {
     }
 }
 
-void free_mailbox(mailbox* mails) {
+void free_mailbox(t_mailbox* mails) {
     if (mails->mails != NULL) {
         for (int i = 0; i < mails->mail_count; i++) {
             if (mails->mails[i].filename != NULL) {

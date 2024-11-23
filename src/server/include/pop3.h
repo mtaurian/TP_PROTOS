@@ -29,11 +29,11 @@ typedef struct mail {
     int deleted;
 } mail;
 
-typedef struct mailbox {
+typedef struct t_mailbox {
     mail *mails;
     int mail_count;
     int deleted_count;
-} mailbox;
+} t_mailbox;
 
 #define MAX_USERS 10
 
@@ -41,7 +41,7 @@ typedef struct user_data {
     char *name;
     char *pass;
     unsigned int logged;
-    mailbox *mailbox;
+    t_mailbox *mailbox;
 } user_data;
 
 
@@ -92,7 +92,7 @@ user_data * validate_user(char *username, char *password);
 void free_user_data(user_data *user);
 
 unsigned int load_mailbox(user_data *user);
-void free_mailbox(mailbox* mails);
+void free_mailbox(t_mailbox* mails);
 
 
 // could be in a utils file
