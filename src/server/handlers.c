@@ -38,7 +38,7 @@ int handle_stat(struct selector_key *key){
     t_mailbox * mailbox = clientData->user->mailbox;
 
     char response[128];
-    snprintf(response, sizeof(response), "%d %zd\r\n", clientData->user->mailbox->mail_count - clientData->user->mailbox->deleted_count , clientData->user->mailbox->mails_size);
+    snprintf(response, sizeof(response), "%d %zd\r\n", clientData->user->mailbox->mail_count , clientData->user->mailbox->mails_size);
     write_std_response(1,response, key);
   	return 1;
 }
@@ -64,7 +64,7 @@ int handle_list(struct selector_key *key, char * mail_number){
 
     snprintf(response, MAX_RESPONSE_SIZE, "%d messages (%zu octets)\r\n", mailbox->mail_count, mailbox->mails_size);
 
-	for (int i = 0; i < mailbox->mail_count; i++) {
+	for (int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++) {
     	if (!mailbox->mails[i].deleted) {
         	char mail_info[50];
         	snprintf(mail_info, sizeof(mail_info), "%d %zu\r\n", mailbox->mails[i].id, mailbox->mails[i].size);
@@ -170,7 +170,17 @@ int handle_dele(struct selector_key *key, char * mail_number){
 }
 
 int handle_rset(struct selector_key *key){
-  	printf("RSET\n");
-  	return 1;
+  	client_data * clientData = ATTACHMENT(key);
+    int rset_amount = 0;
+    for(int i = 0; i < (clientData->user->mailbox->mail_count + clientData->user->mailbox->deleted_count); i++){
+		if(clientData->user->mailbox->mails[i].deleted){
+      		clientData->user->mailbox->mails[i].deleted = 0;
+            clientData->user->mailbox->mails_size += clientData->user->mailbox->mails[i].size;
+            clientData->user->mailbox->mail_count++;
+            clientData->user->mailbox->deleted_count--;
+            rset_amount++;
+        }
+	}
+    return rset_amount;
 }
 

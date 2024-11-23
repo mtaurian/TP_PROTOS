@@ -47,11 +47,9 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		write_std_response(1, NULL, key);
       		break;
     	case RSET:
-      		if(handle_rset(key)){
-
-      		} else { // error
-
-      		}
+      		int rset_amount = handle_rset(key);
+            snprintf(message, MAX_RESPONSE_SIZE, "maildrop has %d messages\r\n", rset_amount);
+            write_std_response(1, message, key);
       		break;
     	case QUIT:
      		handle_quit(key);
