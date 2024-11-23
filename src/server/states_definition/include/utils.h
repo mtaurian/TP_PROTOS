@@ -23,18 +23,18 @@ typedef enum commands {
 
 typedef struct command_struct {
     char * string;
-    enum commands command;
+    commands command;
 } command_struct; 
 
 typedef struct possible_command_struct {
     char * string;
-    enum commands command;
+    commands command;
     boolean possible;
     boolean has_params;
 } possible_command_struct;
 
 typedef struct user_request {
-    enum commands command;
+    commands command;
     boolean is_allowed;
     char * arg;
 } user_request;

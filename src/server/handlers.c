@@ -50,11 +50,6 @@ int handle_dele(struct selector_key *_key, char * mail_number){
   return 1;
 }
 
-int handle_noop(struct selector_key *_key){
-  printf("NOOP\n");
-  return 1;
-}
-
 int handle_rset(struct selector_key *_key){
   printf("RSET\n");
   return 1;

@@ -106,6 +106,7 @@ void close_client(struct selector_key * _key) {
     client_data* data = ATTACHMENT(_key);
     if (data->closed)
         return;
+
     data->closed = true;
 
     int clientFd = data->clientFd;
@@ -115,7 +116,9 @@ void close_client(struct selector_key * _key) {
         close(clientFd);
     }
 
-    log_out_user(data->user);
+    if (data->user != NULL) {
+        log_out_user(data->user);
+    }
 
     free(data->password);
     free(data->username);

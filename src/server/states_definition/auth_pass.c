@@ -42,7 +42,10 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
         	break;
     }
 
-    free(entry->arg);
+    if(entry->arg){
+      free(entry->arg);
+    }
+
     free(entry);
 
     return ret;

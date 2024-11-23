@@ -29,7 +29,6 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       } else { // error
 
       }
-      ret = TRANSACTION;
       break;
     case LIST:
       if(handle_list(key, entry->arg)){
@@ -37,7 +36,6 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       } else { // error
 
       }
-      ret = TRANSACTION;
       break;
     case RETR:
       if(handle_retr(key, entry->arg)){
@@ -45,7 +43,6 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       } else { // error
 
       }
-      ret = TRANSACTION;
       break;
     case DELE:
       if(handle_dele(key, entry->arg)){
@@ -53,16 +50,10 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       } else { // error
 
       }
-      ret = TRANSACTION;
       break;
 
     case NOOP:
-      if(handle_noop(key)){
-
-      } else { // error
-
-      }
-      ret = TRANSACTION;
+      write_std_response(1, NULL, key);
       break;
     case RSET:
       if(handle_rset(key)){
@@ -70,7 +61,6 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       } else { // error
 
       }
-      ret = TRANSACTION;
       break;
 
     case QUIT:
@@ -83,12 +73,14 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       break;
   }
 
-  free(entry->arg);
+  if(entry->arg){
+    free(entry->arg);
+  }
   free(entry);
 
   return ret;
 }
 
 unsigned int transaction_on_ready_to_write(struct selector_key *key){
-  return 0;
+  return ATTACHMENT(key)->stm.current->state;
 }

@@ -86,8 +86,8 @@ user_request * parse(struct selector_key * key, pop3_states state) {
     user_request * request = malloc(sizeof(user_request));
 
     //Find if there is a command that matches the request
-    for(int i = 0 ; i < COMMAND_AMOUNT ; i++){
-        if(strcmp(all_commands[i].string, toLower(command_entry)) == 0) {
+    for(int i = 0 ; i < COMMAND_AMOUNT  && !has_command_been_found; i++){
+        if(strcmp(all_commands[i].string, toLower(command_entry)) == 0){
             has_command_been_found = TRUE;
             request->command = all_commands[i].command;
         }
@@ -95,6 +95,7 @@ user_request * parse(struct selector_key * key, pop3_states state) {
 
     if(!has_command_been_found) {
         free(command_entry);
+        free(request);
         return NULL;
     }
 
@@ -109,7 +110,7 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         return request;
     }
     
-
+	request->arg = NULL;
     //Get the arguments if needed
     if (all_commands[(int) request->command].has_params || request->command == LIST) {
         size_t param;
