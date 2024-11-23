@@ -49,11 +49,15 @@ static const struct state_definition states[] = {
 void initialize_pop3_server() {
     server = malloc(sizeof(struct pop3_server));
     server->user_amount = 0;
+    server->maildir = NULL;
 }
 
 void free_pop3_server() {
     for (int i = 0; i < server->user_amount; i++) {
         free_user_data(&server->users_list[i]);
+    }
+    if(server->maildir) {
+        free(server->maildir);
     }
     free(server);
 }
@@ -235,6 +239,12 @@ void user(char *s) {
     }
 }
 
+void set_maildir(const char *maildir) {
+    server->maildir = malloc(PATH_MAX);
+    strcpy(server->maildir, maildir);
+    printf("MALDIR: %s\n", server->maildir);
+}
+
 unsigned int log_user(user_data *user) {
     if(user->logged) { // someone is already logged in
         return 0;
@@ -274,12 +284,15 @@ user_data *validate_user(char *username, char *password) {
 }
 
 unsigned int load_mailbox(user_data *user) {
-    char maildir_path[PATH_MAX];
-    snprintf(maildir_path, sizeof(maildir_path), "src/server/home/%s/Maildir", user->name);
+    char *user_maildir = malloc(PATH_MAX);
+    snprintf(user_maildir, PATH_MAX, "%s/%s",server->maildir, user->name);
 
-    DIR *dir = opendir(maildir_path);
+    printf("dir: %s\n", user_maildir);
+
+    DIR *dir = opendir(user_maildir);
     if (!dir) {
-        return 0; // no mails
+        free(user_maildir);
+        return 0; // no mails // TODO: error handling
     }
 
     user->mailbox->mails = malloc(MAX_MAILS * sizeof(mail));
@@ -291,19 +304,20 @@ unsigned int load_mailbox(user_data *user) {
         if (entry->d_type == DT_REG) {
             mail *mail = &user->mailbox->mails[count];
 
-            char filepath[PATH_MAX];
-            snprintf(filepath, sizeof(filepath), "%s/%s", maildir_path, entry->d_name);
+            mail->filename = malloc(PATH_MAX);
+            snprintf(mail->filename, PATH_MAX, "%s/%s", user_maildir, entry->d_name);
+
+            printf("filename: %s\n", mail->filename);
 
             mail->id = count + 1;
-            mail->filename = strdup(filepath);
-            mail->size = get_file_size(filepath);
+
+            mail->size = get_file_size(mail->filename);
             mail->deleted = 0;
             mail->fd = -1;
 
             printf("File %s loaded. Bytes: %ld. ID: %d\n", mail->filename, mail->size, mail->id);
 
             if (!mail->filename || mail->size == 0) {
-                free_mailbox(user->mailbox);
                 closedir(dir);
                 return 0;   // TODO: error handling, failing to load an email
             }
@@ -315,6 +329,7 @@ unsigned int load_mailbox(user_data *user) {
     closedir(dir);
     user->mailbox->mail_count = count;
     user->mailbox->mails_size = total_size;
+    free(user_maildir);
     return 1;
 }
 
@@ -330,13 +345,15 @@ size_t get_file_size(const char *filename) {
 }
 
 void free_mailbox(t_mailbox* mails) {
-    if (mails->mails != NULL) {
-        for (int i = 0; i < (mails->mail_count + mails->deleted_count); i++) {
-            if (mails->mails[i].filename != NULL) {
-                free(mails->mails[i].filename);
+    if (mails != NULL) {
+        if (mails->mails != NULL) {
+            for (int i = 0; i < (mails->mail_count + mails->deleted_count); i++) {
+                if (mails->mails[i].filename != NULL) {
+                    free(mails->mails[i].filename);
+                }
             }
+            free(mails->mails);
         }
-        free(mails->mails);
+        free(mails);
     }
-    free(mails);
 }

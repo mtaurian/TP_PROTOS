@@ -21,6 +21,7 @@
 #define ATTACHMENT(key) ((client_data*)(key)->data)
 #define BUFFER_SIZE 2048
 #define MAX_MAILS 100
+#define MAILDIR_PERMISSIONS 0777
 
 typedef struct mail {
     int id;
@@ -70,6 +71,7 @@ typedef struct client_data {
 struct pop3_server {
     user_data users_list[MAX_USERS];
     unsigned int user_amount;
+    char* maildir;
 };
 
 typedef enum pop3_states {
@@ -92,6 +94,7 @@ void log_out_user(user_data *user);
 unsigned int log_user(user_data *user);
 user_data * validate_user(char *username, char *password);
 void free_user_data(user_data *user);
+void set_maildir(const char *maildir);
 
 unsigned int load_mailbox(user_data *user);
 void free_mailbox(t_mailbox* mails);

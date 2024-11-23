@@ -116,7 +116,7 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
                 exit(0);
                 break;
             case 'd':
-                args->maildir = optarg;
+                set_maildir(optarg);
                 break;
             case 't':
                 //TODO implementar
