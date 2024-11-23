@@ -80,70 +80,73 @@ int handle_list(struct selector_key *key, char * mail_number){
 	return 1;
 }
 
-int handle_retr(struct selector_key *key, char * mail_number){
+int handle_retr(struct selector_key *key, char *mail_number) {
 	client_data *clientData = ATTACHMENT(key);
 	t_mailbox *mailbox = clientData->user->mailbox;
 
 	int mail_id = atoi(mail_number);
 
 	if (mail_id <= 0 || mail_id > mailbox->mail_count || mailbox->mails[mail_id - 1].deleted) {
-		printf("hasat aca :(\n");
+		write_std_response(0, "-ERR Invalid message number\r\n", key);
 		return 0;
 	}
 
-
-    printf("hasat donde llegare\n");
 	mail *mail = &mailbox->mails[mail_id - 1];
 
 	if (mail->fd < 0) {
 		mail->fd = open(mail->filename, O_RDONLY | O_NONBLOCK);
 		if (mail->fd < 0) {
 			perror("Error opening mail file");
-			write_std_response(0, "Could not open mail file\r\n", key);
-			printf("aca????\n");
+			write_std_response(0, "-ERR Could not open mail file\r\n", key);
 			return 0;
 		}
 	}
 
-    buffer * b = calloc(0, sizeof(buffer));
-    b->data = malloc(BUFFER_SIZE);
-    buffer_init(b, BUFFER_SIZE, b->data);
+	char * buffer = malloc(BUFFER_SIZE);
+    char * response = malloc(BUFFER_SIZE);
+	size_t response_len = 0;
 
-	buffer_write_string(b, "message follows\r\n");
-	ssize_t bytes_read = read(mail->fd, b->write, BUFFER_SIZE);
-    buffer_write_adv(b, bytes_read);
+	strcpy(response, "message follows\r\n");
+	response_len = strlen(response);
 
+	ssize_t bytes_read;
+	while ((bytes_read = read(mail->fd, buffer, BUFFER_SIZE)) > 0) {
+		buffer[bytes_read] = '\0';
+		if (response_len + bytes_read + 1 > BUFFER_SIZE) {
+			response = realloc(response, response_len + bytes_read + 1);
+		}
+		strncat(response, buffer, bytes_read);
+		response_len += bytes_read;
+	}
 
 	if (bytes_read < 0) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			free(b->data);
-			free(b);
-			printf("raro\n");
+			free(buffer);
+			free(response);
 			return 0;
 		} else {
 			perror("Error reading mail file");
 			close(mail->fd);
 			mail->fd = -1;
-			write_std_response(0, "Could not read mail file\r\n", key);
-			free(b->data);
-			free(b);
+			write_std_response(0, "-ERR Could not read mail file\r\n", key);
+			free(buffer);
+			free(response);
 			return 0;
 		}
-	} else if (bytes_read > 0) {
-		buffer_write_string(b, ".\r\n");
-        write_std_response(1, b->read, key);
-		close(mail->fd);
-		mail->fd = -1;
-		free(b->data);
-		free(b);
-		return 1;
 	}
 
-    free(b->data);
-    free(b);
+	strcat(response, "\n.\r\n");
+	write_std_response(1, response, key);
+
+	close(mail->fd);
+	mail->fd = -1;
+
+	free(response);
+	free(buffer);
 
 	return 1;
 }
+
 
 
 int handle_dele(struct selector_key *key, char * mail_number){
