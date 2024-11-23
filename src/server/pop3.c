@@ -230,12 +230,6 @@ void user(char *s) {
         user->name = name;
         user->logged = 0;
         server->user_amount++;
-
-        user->mailbox = malloc(sizeof(t_mailbox));
-        user->mailbox->mails = NULL;
-        user->mailbox->mail_count = 0;
-        user->mailbox->mails_size = 0;
-        user->mailbox->deleted_count = 0;
     }
 }
 
@@ -244,6 +238,12 @@ unsigned int log_user(user_data *user) {
         return 0;
     }
     user->logged = 1;
+
+    user->mailbox = malloc(sizeof(t_mailbox));
+    user->mailbox->mails = NULL;
+    user->mailbox->mail_count = 0;
+    user->mailbox->mails_size = 0;
+    user->mailbox->deleted_count = 0;
 
     load_mailbox(user);
 
@@ -296,6 +296,7 @@ unsigned int load_mailbox(user_data *user) {
             mail->filename = strdup(filepath);
             mail->size = get_file_size(filepath);
             mail->deleted = 0;
+            mail->fd = -1;
 
             printf("File %s loaded. Bytes: %ld. ID: %d\n", mail->filename, mail->size, mail->id);
 

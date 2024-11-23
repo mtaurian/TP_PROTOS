@@ -36,7 +36,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		if(handle_retr(key, entry->arg)){
 
       		} else { // error
-
+				write_std_response(0,  "no such message\r\n",key);
       		}
       		break;
     	case DELE:

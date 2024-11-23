@@ -24,6 +24,7 @@
 
 typedef struct mail {
     int id;
+    int fd;
     char *filename;
     size_t size;
     int deleted;
