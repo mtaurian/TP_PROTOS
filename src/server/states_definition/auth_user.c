@@ -35,8 +35,6 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
             break;
         case QUIT:
             handle_quit(key);
-            message =  "Goodbye\n";
-            write_std_response(1,message, key);
             break;
         case PASS:
             message =  "No username given.\n";

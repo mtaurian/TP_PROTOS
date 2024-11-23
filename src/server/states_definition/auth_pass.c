@@ -33,8 +33,6 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
         break;
         case QUIT:
             handle_quit(key);
-            message =  "Goodbye\n";
-            write_std_response(1,message, key);
         	break;
         default:
             message =  "Authentication needed to run command.\n";

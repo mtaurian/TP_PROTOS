@@ -16,6 +16,7 @@ int handle_user(struct selector_key *key, char * username){
 
 void handle_quit(struct selector_key *key){
     close_client(key);
+	write_std_response(1,"Goodbye", key);
 }
 
 int handle_pass(struct selector_key *key, char * password){
@@ -87,7 +88,6 @@ int handle_retr(struct selector_key *key, char *mail_number) {
 	int mail_id = atoi(mail_number);
 
 	if (mail_id <= 0 || mail_id > mailbox->mail_count || mailbox->mails[mail_id - 1].deleted) {
-		write_std_response(0, "-ERR Invalid message number\r\n", key);
 		return 0;
 	}
 
@@ -97,7 +97,6 @@ int handle_retr(struct selector_key *key, char *mail_number) {
 		mail->fd = open(mail->filename, O_RDONLY | O_NONBLOCK);
 		if (mail->fd < 0) {
 			perror("Error opening mail file");
-			write_std_response(0, "-ERR Could not open mail file\r\n", key);
 			return 0;
 		}
 	}
@@ -184,3 +183,13 @@ int handle_rset(struct selector_key *key){
     return rset_amount;
 }
 
+void handle_update_quit(struct selector_key *key){
+	client_data * clientData = ATTACHMENT(key);
+    t_mailbox * mailbox = clientData->user->mailbox;
+	for (int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++) {
+		if (mailbox->mails[i].deleted) {
+			remove(mailbox->mails[i].filename);
+		}
+	}
+    handle_quit(key);
+}

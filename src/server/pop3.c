@@ -2,6 +2,7 @@
 #include "states_definition/include/auth_user.h"
 #include "states_definition/include/auth_pass.h"
 #include "states_definition/include/transaction.h"
+#include "states_definition/include/update.h"
 #include <dirent.h>
 #include <sys/stat.h>
 
@@ -38,7 +39,7 @@ static const struct state_definition states[] = {
     },
     {
         .state            = UPDATE,
-        .on_arrival       = NULL,
+        .on_arrival       = update_on_arrival,
         .on_departure     = NULL,
         .on_read_ready    = NULL,
         .on_write_ready   = NULL,

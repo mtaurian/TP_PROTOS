@@ -52,9 +52,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
             write_std_response(1, message, key);
       		break;
     	case QUIT:
-     		handle_quit(key);
-     		snprintf(message, MAX_RESPONSE_SIZE, "Goodbye\n");
-      		write_std_response(1,message, key);
+            ret = UPDATE;
       		break;
     	default:
       		write_std_response(0, NULL, key);
