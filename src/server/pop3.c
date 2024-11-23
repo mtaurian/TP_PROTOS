@@ -66,6 +66,7 @@ void free_user_data(user_data *user) {
     }
     if (user->mailbox) {
         free_mailbox(user->mailbox);
+        user->mailbox = NULL;
     }
 }
 
@@ -329,7 +330,7 @@ size_t get_file_size(const char *filename) {
 
 void free_mailbox(t_mailbox* mails) {
     if (mails->mails != NULL) {
-        for (int i = 0; i < mails->mail_count; i++) {
+        for (int i = 0; i < (mails->mail_count + mails->deleted_count); i++) {
             if (mails->mails[i].filename != NULL) {
                 free(mails->mails[i].filename);
             }

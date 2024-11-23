@@ -150,7 +150,22 @@ int handle_retr(struct selector_key *key, char *mail_number) {
 
 
 int handle_dele(struct selector_key *key, char * mail_number){
-  	printf("DELE\n");
+    client_data * clientData = ATTACHMENT(key);
+	t_mailbox * mailbox = clientData->user->mailbox;
+  	int mail_id = atoi(mail_number);
+
+    if(mail_id <= 0 || mail_id > mailbox->mail_count || mailbox->mails[mail_id - 1].deleted){
+		return 0;
+	}
+
+    mailbox->mails[mail_id - 1].deleted = 1;
+    mailbox->mails_size -= mailbox->mails[mail_id - 1].size;
+    mailbox->mail_count--;
+    mailbox->deleted_count++;
+    char * response = malloc(MAX_RESPONSE_SIZE);
+    snprintf(response, MAX_RESPONSE_SIZE, "message %d deleted\r\n", mail_id);
+	write_std_response(1, response,key);
+    free(response);
   	return 1;
 }
 

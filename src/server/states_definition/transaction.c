@@ -33,17 +33,14 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		}
       		break;
     	case RETR:
-      		if(handle_retr(key, entry->arg)){
-
-      		} else { // error
+      		if(!handle_retr(key, entry->arg)){ // error
 				write_std_response(0,  "no such message\r\n",key);
       		}
       		break;
     	case DELE:
-      		if(handle_dele(key, entry->arg)){
-
-      		} else { // error
-
+      		if(!handle_dele(key, entry->arg)){
+                snprintf(message, MAX_RESPONSE_SIZE, "message %d already deleted\r\n", atoi(entry->arg)); // TODO: validacion con negativos
+				write_std_response(0, message, key);
       		}
       		break;
     	case NOOP:
