@@ -9,13 +9,14 @@ void auth_pass_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
-    user_request * entry = parse(key, AUTHORIZATION_PASSWORD);
+    user_request * entry = parse(key);
     char * message = NULL;
     int ret = AUTHORIZATION_PASSWORD;
 
-    if(entry == NULL){
+    if(entry->command == INVALID){
         message =  "Unknown command.\n";
         write_std_response(0, message, key);
+        free(entry);
         return ret;
     }
 
@@ -32,16 +33,13 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
             }
         break;
         case QUIT:
+            free(entry);
             handle_quit(key);
         	break;
         default:
             message =  "Authentication needed to run command.\n";
             write_std_response(0, NULL, key);
         	break;
-    }
-
-    if(entry->arg){
-      free(entry->arg);
     }
 
     free(entry);
