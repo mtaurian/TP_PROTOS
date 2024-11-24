@@ -52,7 +52,7 @@ int handle_list(struct selector_key *key, char * mail_number){
     if(mail_number == NULL) {
         mail_id = -1;
     } else {
-        mail_id = atoi(mail_number);
+        mail_id = atoi(mail_number);   // TODO: list -1 returns same error as the rest
     }
 
     char *response = malloc(MAX_RESPONSE_SIZE);
@@ -91,10 +91,10 @@ int handle_retr(struct selector_key *key, char *mail_number) {
 	client_data *clientData = ATTACHMENT(key);
 	t_mailbox *mailbox = clientData->user->mailbox;
 
-	int mail_id = atoi(mail_number);
+	int mail_id = atoi(mail_number); // TODO: atoi breaks when float
 
 	if (mail_id <= 0 || mail_id > mailbox->mail_count || mailbox->mails[mail_id - 1].deleted) {
-		return 0;
+		return 0; // TODO eror management
 	}
 
 	mail *mail = &mailbox->mails[mail_id - 1];
@@ -126,18 +126,17 @@ int handle_retr(struct selector_key *key, char *mail_number) {
 
 	if (bytes_read < 0) {
 		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-			free(buffer);
-			free(response);
-			return 0;
+             //
 		} else {
-			perror("Error reading mail file");
-			close(mail->fd);
-			mail->fd = -1;
+			perror("Error reading mail file"); // TODO error management
 			write_std_response(0, "-ERR Could not read mail file\r\n", key);
-			free(buffer);
-			free(response);
-			return 0;
 		}
+        free(response);
+		free(buffer);
+        mail->fd = -1;
+    	close(mail->fd);
+		return 0;
+
 	}
 
 	strcat(response, "\n.\r\n");
@@ -157,7 +156,7 @@ int handle_retr(struct selector_key *key, char *mail_number) {
 int handle_dele(struct selector_key *key, char * mail_number){
     client_data * clientData = ATTACHMENT(key);
 	t_mailbox * mailbox = clientData->user->mailbox;
-  	int mail_id = atoi(mail_number);
+  	int mail_id = atoi(mail_number);  // TODO: atoi breaks when float
 
     if(mail_id <= 0 || mail_id > mailbox->mail_count || mailbox->mails[mail_id - 1].deleted){
 		return 0;

@@ -258,9 +258,7 @@ unsigned int log_user(user_data *user) {
     user->mailbox->mails_size = 0;
     user->mailbox->deleted_count = 0;
 
-    load_mailbox(user);
-
-    return 1;
+    return load_mailbox(user);;
 }
 
 void log_out_user(user_data *user) {
@@ -278,7 +276,7 @@ user_data *validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {
         if(strcmp(server->users_list[i].name, username) == 0 && strcmp(server->users_list[i].pass, password) == 0) {
             printf("Signed in user %s\n", username); // TODO: do as a log
-            return &server->users_list[i];
+            return &server->users_list[i]; // TODO: return 1 or 0
         }
     }
     return NULL;
@@ -286,9 +284,7 @@ user_data *validate_user(char *username, char *password) {
 
 unsigned int load_mailbox(user_data *user) {
     char *user_maildir = malloc(PATH_MAX);
-    snprintf(user_maildir, PATH_MAX, "%s/%s",server->maildir, user->name);
-
-    printf("dir: %s\n", user_maildir);
+    snprintf(user_maildir, PATH_MAX, "%s",server->maildir);
 
     DIR *dir = opendir(user_maildir);
     if (!dir) {
@@ -296,41 +292,67 @@ unsigned int load_mailbox(user_data *user) {
         return 0; // no mails // TODO: error handling
     }
 
+    if(user->mailbox == NULL) {
+        closedir(dir);
+        free(user_maildir);
+        return 0;
+    }
+
     user->mailbox->mails = malloc(MAX_MAILS * sizeof(mail));
 
     struct dirent *entry;
     int count = 0;
     size_t total_size = 0;
-    while ((entry = readdir(dir)) != NULL && count < MAX_MAILS) {
-        if (entry->d_type == DT_REG) {
-            mail *mail = &user->mailbox->mails[count];
+    char * current_dir = malloc(PATH_MAX);
+    snprintf(current_dir, PATH_MAX, "%s", user_maildir);
 
-            mail->filename = malloc(PATH_MAX);
-            snprintf(mail->filename, PATH_MAX, "%s/%s", user_maildir, entry->d_name);
-
-            printf("filename: %s\n", mail->filename);
-
-            mail->id = count + 1;
-
-            mail->size = get_file_size(mail->filename);
-            mail->deleted = 0;
-            mail->fd = -1;
-
-            printf("File %s loaded. Bytes: %ld. ID: %d\n", mail->filename, mail->size, mail->id);
-
-            if (!mail->filename || mail->size == 0) {
-                closedir(dir);
-                return 0;   // TODO: error handling, failing to load an email
+    for(int i = 0; i < DIR_AMOUNT && (entry = readdir(dir)) != NULL; i++) {
+        if(entry->d_type == DT_DIR){
+            memset(current_dir, 0, PATH_MAX);
+            snprintf(current_dir, PATH_MAX,"%s/%s", user_maildir, entry->d_name);
+            dir = opendir(current_dir);
+            if (!dir) {
+                free(current_dir);
+                free(user_maildir);
+                return 0; // no mails // TODO: error handling
             }
-            total_size += mail->size;
-            count++;
+        } else {
+            // TODO: error management
+        }
+
+        while ((entry = readdir(dir)) != NULL && count < MAX_MAILS) {
+            if (entry->d_type == DT_REG) {
+                mail *mail = &user->mailbox->mails[count];
+
+                mail->filename = malloc(PATH_MAX);
+                snprintf(mail->filename, PATH_MAX, "%s/%s", current_dir, entry->d_name);
+
+                mail->id = count + 1;
+
+                mail->size = get_file_size(mail->filename);
+                mail->deleted = 0;
+                mail->fd = -1;
+
+                if (!mail->filename || mail->size == 0) {
+                    closedir(dir);
+                    free(user_maildir);
+                    free(current_dir);
+                    return 0;   // TODO: error handling, failing to load an email
+                }
+
+                total_size += mail->size;
+                count++;
+            }
         }
     }
+
+
 
     closedir(dir);
     user->mailbox->mail_count = count;
     user->mailbox->mails_size = total_size;
     free(user_maildir);
+    free(current_dir);
     return 1;
 }
 

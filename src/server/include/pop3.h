@@ -22,13 +22,14 @@
 #define BUFFER_SIZE 2048
 #define MAX_MAILS 100
 #define MAILDIR_PERMISSIONS 0777
+#define DIR_AMOUNT 3
 
 typedef struct mail {
     int id;
     int fd;
     char *filename;
     size_t size;
-    int deleted;
+    int deleted; // TODO: change unsigned int
 } mail;
 
 typedef struct t_mailbox {
