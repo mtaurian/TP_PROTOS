@@ -28,19 +28,20 @@ struct command_struct update_commands[UPDATE_COMMAND_AMOUNT] = {
 };
 
 struct possible_command_struct all_commands[COMMAND_AMOUNT] = {
-    { .string = "user", .command = USER, .possible = true, .has_params = true },
-    { .string = "pass", .command = PASS, .possible = true, .has_params = true  },
-    { .string = "stat", .command = STAT, .possible = true, .has_params = false  },
-    { .string = "list", .command = LIST, .possible = true, .has_params = false  }, // list can have argument
-    { .string = "retr", .command = RETR, .possible = true, .has_params = true  },
-    { .string = "dele", .command = DELE, .possible = true, .has_params = true  },
-    { .string = "noop", .command = NOOP, .possible = true, .has_params = false  },
-    { .string = "rset", .command = RSET, .possible = true, .has_params = false  },
-    { .string = "quit", .command = QUIT, .possible = true, .has_params = false  }
+    { .string = "user", .command = USER, .possible = TRUE, .has_params = TRUE },
+    { .string = "pass", .command = PASS, .possible = TRUE, .has_params = TRUE  },
+    { .string = "stat", .command = STAT, .possible = TRUE, .has_params = FALSE  },
+    { .string = "list", .command = LIST, .possible = TRUE, .has_params = FALSE  }, // list can have argument
+    { .string = "retr", .command = RETR, .possible = true, .has_params = TRUE  },
+    { .string = "dele", .command = DELE, .possible = TRUE, .has_params = TRUE  },
+    { .string = "noop", .command = NOOP, .possible = TRUE, .has_params = FALSE  },
+    { .string = "rset", .command = RSET, .possible = TRUE, .has_params = FALSE  },
+    { .string = "quit", .command = QUIT, .possible = TRUE, .has_params = FALSE  }
 
 };
 
 user_request * parse(struct selector_key * key, pop3_states state) {
+    printf("Parsing command\n");
     struct command_struct * commands_allowed;
     int commands_allowed_size = -1;
 
@@ -66,10 +67,18 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         break;
     }
 
+    printf("____________________\n");
+    for (int i = 0; i < commands_allowed_size; i++) {
+        printf("Command %d: %s\n", i, commands_allowed[i].string);
+    }
+    
+    printf("____________________\n");
+
     client_data * clientData= ATTACHMENT(key);
     int command_index = 0;
     char command_entry[MAX_COMMAND_SIZE + 1];
 
+    // Find the command requested
     uint8_t entry;
     do {
         entry = buffer_read(&clientData->clientBuffer);
@@ -80,10 +89,13 @@ user_request * parse(struct selector_key * key, pop3_states state) {
     
     command_entry[command_index] = '\0';
 
+    printf("Command entry: %s\n", command_entry);
+
     boolean has_command_been_found = FALSE;
 
     // Find the valid command
     user_request * request = malloc(sizeof(user_request));
+    request->is_valid = FALSE;
     request->arg = NULL;
 
     //Find if there is a command that matches the request
@@ -94,37 +106,75 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         }
     }
 
+    printf("Has command been found: %d\n", has_command_been_found);
+
     if(!has_command_been_found) {
         return request;
     }
 
+    printf("Command found: %d\n", request->command);
+
     //Was this a valid command in the current state?
-    for (int i = 0; i < commands_allowed_size && !request->is_allowed ; i++){
+    for (int i = 0; i < commands_allowed_size && !request->is_valid ; i++){
         if (commands_allowed[i].command == request->command) {
-            request->is_allowed = true;
+            request->is_valid = TRUE;
         }
     }
-    if(!request->is_allowed){
+    if(!request->is_valid){
         return request;
     }
     
+    printf("Command is allowed\n");
+
     //Get the arguments if needed
     if (all_commands[(int) request->command].has_params || request->command == LIST) {
         size_t param;
         buffer_read_ptr(&clientData->clientBuffer, &param);
 
+        printf("Param: %ld\n", param);
+
         entry = buffer_read(&clientData->clientBuffer);
-        if(entry == ' '){
+        if(entry == '\r' || entry == '\n'){ //No args where given
+            entry = buffer_read(&clientData->clientBuffer);
+            if(request->command != LIST){
+                request->is_valid = FALSE;
+            } else {
+                request->arg = NULL;
+                for(int i = 0; entry != '\r' && entry != '\n' && i < param; i++){
+                    entry = buffer_read(&clientData->clientBuffer);
+                }
+                if(entry == '\r' || entry == '\n'){
+                    entry = buffer_read(&clientData->clientBuffer);
+                }
+                return request;
+            }
+            return request;
+        }
+
+        if(entry != ' ') {
+            request->is_valid = FALSE;
+            return request;
+        } else {// Skip the space
             entry = buffer_read(&clientData->clientBuffer);
         }
+        
         request->arg = malloc((param+1) * sizeof(uint8_t));
         int i;
-        for(i = 0; entry != '\r' && entry != '\n' && entry != ' ' && i < param; i++){
+        for(i = 0; entry != '\r' && entry != '\n' && i < param; i++){
+            if(entry == ' '){ // Skip the space
+                request->is_valid = FALSE;
+            }
             request->arg[i] = (char) entry;
             entry = buffer_read(&clientData->clientBuffer);
         }
+        if(entry == '\r' || entry == '\n'){
+            entry = buffer_read(&clientData->clientBuffer);
+        }
+
         request->arg[i] = '\0';
     }
+
+    printf("Args: %s\n", request->arg);
 
     return request;
 }

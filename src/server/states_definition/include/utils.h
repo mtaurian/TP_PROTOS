@@ -35,7 +35,7 @@ typedef struct possible_command_struct {
 
 typedef struct user_request {
     commands command;
-    boolean is_allowed;
+    boolean is_valid;
     char * arg;
 } user_request;
 
