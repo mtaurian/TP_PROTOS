@@ -69,7 +69,8 @@ void free_user_data(user_data *user) {
     if (user->pass) {
         free(user->pass);
     }
-    if (user->mailbox) {
+
+    if (user->logged && user->mailbox) {
         free_mailbox(user->mailbox);
         user->mailbox = NULL;
     }
