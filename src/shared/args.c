@@ -49,7 +49,7 @@ usage(const char *progname) {
         "Usage: %s [OPTION]...\n"
         "\n"
         "   -h               Imprime la ayuda y termina.\n"
-        "   -l <POP3 addr>   Dirección donde servirá el servidor POP.\n"
+        "   -l <POP3 addr>   Dirección donde servirá el servidor POP3.\n"
         "   -L <conf  addr>  Dirección donde servirá el servicio de management.\n"
         "   -p <POP3 port>   Puerto entrante conexiones POP3.\n"
         "   -P <conf port>   Puerto entrante conexiones configuracion\n"
@@ -91,10 +91,12 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
                 usage(argv[0]);
                 break;
             case 'l':
-                args->pop3_addr = optarg;
+                args->pop3_addr = malloc(strlen(optarg) + 1);
+                strcpy(args->pop3_addr, optarg);
                 break;
             case 'L':
-                args->mng_addr = optarg;
+                args->mng_addr = malloc(strlen(optarg) + 1);
+                strcpy(args->mng_addr, optarg);
                 break;
             case 'p':
                 args->pop3_port = port(optarg);
