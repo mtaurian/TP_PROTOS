@@ -81,7 +81,7 @@ void mgmt_passive_accept(struct selector_key *_key) {
         free(clientData);
         close(client_fd);
     } else {
-        printf("Client connected\n");
+        printf("Client connected - mgmt\n");
     }
 
 }

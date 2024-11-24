@@ -206,7 +206,7 @@ int main(const int argc,char **argv) {
     };
 
     // register as reader
-    ss = selector_register(selector, mgmt_fd, &management,OP_NOOP, NULL);
+    ss = selector_register(selector, mgmt_fd, &management,OP_READ, NULL);
     if(ss != SELECTOR_SUCCESS) {
         err_msg = "registering fd";
         goto finally;
