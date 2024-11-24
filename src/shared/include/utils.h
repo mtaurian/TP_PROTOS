@@ -2,7 +2,7 @@
 #define TP_PROTOS_UTILS_H
 
 #include <ctype.h>
-#include "../../include/pop3.h"
+#include "../../server/pop3/include/pop3.h"
 #include <stdio.h>
 #include <string.h>
 

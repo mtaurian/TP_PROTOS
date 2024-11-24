@@ -27,7 +27,7 @@
 
 #include "../shared/include/buffer.h"
 #include "../shared/include/args.h"
-#include "../server/include/pop3.h"
+#include "../server/pop3/include/pop3.h"
 #include "manager/include/mgmt.h"
 
 static bool done = false;

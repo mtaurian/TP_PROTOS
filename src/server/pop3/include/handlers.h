@@ -1,8 +1,8 @@
 #ifndef TP_PROTOS_HANDLERS_H
 #define TP_PROTOS_HANDLERS_H
 
-#include "../../shared/include/selector.h"
-#include "../states_definition/include/utils.h"
+#include "../../../shared/include/selector.h"
+#include "../../../shared/include/utils.h"
 
 #define MAX_RESPONSE_SIZE 1024
 

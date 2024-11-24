@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include "include/mgmt.h"
-#include "../states_definition/include/utils.h"
+#include "../../shared/include/utils.h"
 #include "manager_states_definition/include/non_authenticated_mgmt.h"
 
 static const struct state_definition states [] = {

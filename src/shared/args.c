@@ -6,7 +6,7 @@
 #include <getopt.h>
 
 #include "include/args.h"
-#include "../server/include/pop3.h"
+#include "../server/pop3/include/pop3.h"
 
 
 static unsigned short

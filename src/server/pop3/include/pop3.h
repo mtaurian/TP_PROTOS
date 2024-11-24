@@ -15,8 +15,8 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 
-#include "../../shared/include/buffer.h"
-#include "../../shared/include/stm.h"
+#include "../../../shared/include/buffer.h"
+#include "../../../shared/include/stm.h"
 
 #define ATTACHMENT(key) ((client_data*)(key)->data)
 #define BUFFER_SIZE 2048
