@@ -3,8 +3,7 @@ include ./Makefile.inc
 SHARED_SOURCES=$(wildcard src/shared/*.c)
 SERVER_SOURCES=$(wildcard src/server/*.c)
 STATES_SOURCES=$(wildcard src/server/states_definition/*.c)
-CLIENT_SOURCES=$(wildcard src/management/client/*.c)
-MANAGER_SOURCES=$(wildcard src/management/manager/*.c)
+CLIENT_SOURCES=$(wildcard src/management/*.c src/management/client/*.c src/management/manager/*.c)
 
 OUTPUT_FOLDER=./bin
 MANAGEMENT_OUTPUT_FOLDER=./bin/management
@@ -22,10 +21,9 @@ SERVER_OUTPUT_FILE=$(OUTPUT_FOLDER)/pop3
 CLIENT_OUTPUT_FILE=$(MANAGEMENT_OUTPUT_FOLDER)/client
 MANAGER_OUTPUT_FILE=$(MANAGEMENT_OUTPUT_FOLDER)/manager
 
-all: server manager_server manager_client
+all: server manager_client
 
 server: $(SERVER_OUTPUT_FILE)
-manager_server: $(MANAGER_OUTPUT_FILE)
 manager_client: $(CLIENT_OUTPUT_FILE)
 
 $(SERVER_OUTPUT_FILE): $(SERVER_OBJECTS) $(SHARED_OBJECTS) $(STATES_OBJECTS)
@@ -35,10 +33,6 @@ $(SERVER_OUTPUT_FILE): $(SERVER_OBJECTS) $(SHARED_OBJECTS) $(STATES_OBJECTS)
 $(CLIENT_OUTPUT_FILE): $(CLIENT_OBJECTS)
 	mkdir -p $(MANAGEMENT_OUTPUT_FOLDER)
 	$(COMPILER) $(CFLAGS) $(LDFLAGS) $(CLIENT_OBJECTS) -o $(CLIENT_OUTPUT_FILE)
-
-$(MANAGER_OUTPUT_FILE): $(MANAGEMENT_OBJECTS)
-	mkdir -p $(MANAGEMENT_OUTPUT_FOLDER)
-	$(COMPILER) $(CFLAGS) $(LDFLAGS) $(MANAGEMENT_OBJECTS) -o $(MANAGER_OUTPUT_FILE)
 
 obj/%.o: src/%.c
 	mkdir -p $(OBJECTS_FOLDER)/server
