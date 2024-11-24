@@ -80,7 +80,8 @@ static int setupSockAddr(char* addr, unsigned short port, void* res, socklen_t* 
 
 int main(const int argc,char **argv) {
     initialize_pop3_server();
-    struct pop3args *pop3config = malloc(sizeof(*pop3config));
+    struct pop3args *pop3config = malloc(sizeof(struct pop3args));
+
     parse_args(argc,argv,pop3config);
     close(0);
     const char *err_msg       = NULL;
@@ -89,8 +90,13 @@ int main(const int argc,char **argv) {
     fd_selector selector      = NULL;
 
     int server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int mgmt_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (server_fd < 0) {
         err_msg = "unable to create socket";
+        goto finally;
+    }
+    if (mgmt_fd < 0) {
+        err_msg = "unable to create socket - management";
         goto finally;
     }
 
@@ -164,28 +170,15 @@ int main(const int argc,char **argv) {
 
     printf("Server listening\n");
 
-    while(!done) {
-        ss = selector_select(selector);
-        if(ss != SELECTOR_SUCCESS) {
-            err_msg = "serving";
-            goto finally;
-        }
-    }
-
     //MANAGE
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr_len = sizeof(server_addr);
 
-    if (setupSockAddr(pop3config->pop3_addr, pop3config->pop3_port, &server_addr, &server_addr_len)) {
+    if (setupSockAddr(pop3config->mng_addr, pop3config->mng_port, &server_addr, &server_addr_len)) {
         err_msg = "Failed to setup server address";
         goto finally;
     }
 
-    int mgmt_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (mgmt_fd < 0) {
-        err_msg = "unable to create socket - management";
-        goto finally;
-    }
 
     // man 7 ip. no importa reportar nada si falla.
     setsockopt(mgmt_fd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
@@ -212,7 +205,7 @@ int main(const int argc,char **argv) {
     };
 
     // register as reader
-    ss = selector_register(selector, mgmt_fd, &management,OP_READ, NULL);
+    ss = selector_register(selector, mgmt_fd, &management,OP_NOOP, NULL);
     if(ss != SELECTOR_SUCCESS) {
         err_msg = "registering fd";
         goto finally;
@@ -228,7 +221,7 @@ int main(const int argc,char **argv) {
         }
     }
 
-    printf("closing");
+    printf("closing\n");
 
     int ret = 0;
 
@@ -246,14 +239,20 @@ finally:
     if(selector != NULL) {
         selector_destroy(selector);
     }
+
     selector_close();
 
     if(server_fd >= 0) {
         close(server_fd);
         printf("Servidor cerrado.\n");
     }
-    free(pop3config);
 
+    if(mgmt_fd >= 0) {
+        close(mgmt_fd);
+        printf("Servidor de management cerrado.\n");
+    }
+
+    free(pop3config);
     free_pop3_server();
 
     return ret;
