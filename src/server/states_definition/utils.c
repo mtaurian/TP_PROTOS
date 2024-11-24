@@ -41,7 +41,6 @@ struct possible_command_struct all_commands[COMMAND_AMOUNT] = {
 };
 
 user_request * parse(struct selector_key * key, pop3_states state) {
-    printf("Parsing command\n");
     struct command_struct * commands_allowed;
     int commands_allowed_size = -1;
 
@@ -66,14 +65,7 @@ user_request * parse(struct selector_key * key, pop3_states state) {
     default:
         break;
     }
-
-    printf("____________________\n");
-    for (int i = 0; i < commands_allowed_size; i++) {
-        printf("Command %d: %s\n", i, commands_allowed[i].string);
-    }
     
-    printf("____________________\n");
-
     client_data * clientData= ATTACHMENT(key);
     int command_index = 0;
     char command_entry[MAX_COMMAND_SIZE + 1];
@@ -88,8 +80,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
     } while (command_index < MAX_COMMAND_SIZE && entry != ' ' && entry != '\n' && entry != '\0');
     
     command_entry[command_index] = '\0';
-
-    printf("Command entry: %s\n", command_entry);
 
     boolean has_command_been_found = FALSE;
 
@@ -106,13 +96,9 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         }
     }
 
-    printf("Has command been found: %d\n", has_command_been_found);
-
     if(!has_command_been_found) {
         return request;
     }
-
-    printf("Command found: %d\n", request->command);
 
     //Was this a valid command in the current state?
     for (int i = 0; i < commands_allowed_size && !request->is_valid ; i++){
@@ -124,14 +110,11 @@ user_request * parse(struct selector_key * key, pop3_states state) {
         return request;
     }
     
-    printf("Command is allowed\n");
-
     //Get the arguments if needed
     if (all_commands[(int) request->command].has_params || request->command == LIST) {
         size_t param;
         buffer_read_ptr(&clientData->clientBuffer, &param);
 
-        printf("Param: %ld\n", param);
 
         entry = buffer_read(&clientData->clientBuffer);
         if(entry == '\r' || entry == '\n'){ //No args where given
@@ -173,8 +156,6 @@ user_request * parse(struct selector_key * key, pop3_states state) {
 
         request->arg[i] = '\0';
     }
-
-    printf("Args: %s\n", request->arg);
 
     return request;
 }
