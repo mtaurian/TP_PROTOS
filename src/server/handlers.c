@@ -45,9 +45,15 @@ int handle_stat(struct selector_key *key){
 }
 
 int handle_list(struct selector_key *key, char * mail_number){
-  	int mail_id = atoi(mail_number);
+  	int mail_id;
     client_data * clientData = ATTACHMENT(key);
     t_mailbox * mailbox = clientData->user->mailbox;
+
+    if(mail_number == NULL) {
+        mail_id = -1;
+    } else {
+        mail_id = atoi(mail_number);
+    }
 
     char *response = malloc(MAX_RESPONSE_SIZE);
 
