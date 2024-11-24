@@ -590,13 +590,3 @@ selector_fd_set_nio(const int fd) {
     }
     return ret;
 }
-
-void selector_print_fds(fd_selector s) {
-    if (s == NULL) {
-        printf("Selector is NULL\n");
-        return;
-    }
-    for (int i = 0; i <= s->max_fd; i++) {
-        struct item *item = s->fds + i;
-    }
-}

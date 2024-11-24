@@ -269,9 +269,6 @@ void log_out_user(user_data *user) {
     }
 }
 
-
-
-
 user_data *validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {
         if(strcmp(server->users_list[i].name, username) == 0 && strcmp(server->users_list[i].pass, password) == 0) {
