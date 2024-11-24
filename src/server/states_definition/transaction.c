@@ -9,17 +9,14 @@ void transaction_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int transaction_on_ready_to_read(struct selector_key *key){
-  	user_request * entry = parse(key, TRANSACTION);
+  	user_request * entry = parse(key);
     char * message = malloc(MAX_RESPONSE_SIZE);
   	int ret = TRANSACTION;
-
-  	const char * statCmd = "STAT";
-  	const char * listCmd = "LIST";
-  	const char * retrCmd = "RETR";
-  	const char * deleCmd = "DELE";
-  	const char * noopCmd = "NOOP";
-  	const char * rsetCmd = "RSET";
-  	const char * quitCmd = "QUIT";
+	if(entry == NULL || entry->command == INVALID){
+		message =  "Unknown command.\n";
+		write_std_response(0, message, key);
+		return ret;
+	}
 
 
   	switch (entry->command) {
@@ -57,10 +54,6 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
     	default:
       		write_std_response(0, NULL, key);
       		break;
-  	}
-
-  	if(entry->arg){
-    	free(entry->arg);
   	}
 
     free(message);

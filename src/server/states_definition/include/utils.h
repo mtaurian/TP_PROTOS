@@ -3,14 +3,13 @@
 
 #include <ctype.h>
 #include "../../include/pop3.h"
+#include <stdio.h>
+#include <string.h>
 
-#define STATES_AMOUNT 4
-#define COMMAND_AMOUNT 9
-#define AUTH_COMMAND_AMOUNT 2
-#define TRANSACTION_COMMAND_AMOUNT 7
-#define UPDATE_COMMAND_AMOUNT 1
-#define CAPS 32
-#define MAX_COMMAND_SIZE 4
+#define MAX_COMMAND_LENGTH 50
+#define MAX_ARGUMENTS 10
+#define COMMAND_AMOUNT 10
+
 
 typedef enum boolean {
     FALSE = 0,
@@ -18,25 +17,19 @@ typedef enum boolean {
 } boolean;
 
 typedef enum commands {
-    USER = 0, PASS, STAT, LIST, RETR, DELE, NOOP, RSET, QUIT
+    USER = 0, PASS, STAT, LIST, RETR, DELE, NOOP, RSET, QUIT, INVALID
 } commands;
 
 typedef struct command_struct {
     char * string;
     commands command;
-} command_struct; 
-
-typedef struct possible_command_struct {
-    char * string;
-    commands command;
-    boolean possible;
     boolean has_params;
-} possible_command_struct;
+} command_struct;
 
 typedef struct user_request {
     commands command;
     boolean is_valid;
-    char * arg;
+    char arg[BUFFER_SIZE];
 } user_request;
 
 typedef struct client_data {
@@ -61,7 +54,7 @@ typedef struct client_data {
 /*
     Parses user's request and returns a user_request or NULL if command not found
 */
-user_request * parse(struct selector_key * key, pop3_states state);
+user_request * parse(struct selector_key * key);
 
 void write_std_response(char isOk, char * msg, struct selector_key * key);
 
