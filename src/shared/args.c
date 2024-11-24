@@ -62,8 +62,7 @@ usage(const char *progname) {
     exit(1);
 }
 
-void 
-parse_args(const int argc, char **argv, struct pop3args *args) {
+void parse_args(const int argc, char **argv, struct pop3args *args) {
     memset(args, 0, sizeof(*args)); // sobre todo para setear en null los punteros de users
 
     args->pop3_addr = "0.0.0.0";
@@ -91,12 +90,10 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
                 usage(argv[0]);
                 break;
             case 'l':
-                args->pop3_addr = malloc(strlen(optarg) + 1);
-                strcpy(args->pop3_addr, optarg);
+                args->pop3_addr = optarg;
                 break;
             case 'L':
-                args->mng_addr = malloc(strlen(optarg) + 1);
-                strcpy(args->mng_addr, optarg);
+                args->mng_addr = optarg;
                 break;
             case 'p':
                 args->pop3_port = port(optarg);
