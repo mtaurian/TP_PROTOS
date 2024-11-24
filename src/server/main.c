@@ -28,6 +28,7 @@
 #include "../shared/include/buffer.h"
 #include "../shared/include/args.h"
 #include "../server/include/pop3.h"
+#include "manager/include/mgmt.h"
 
 static bool done = false;
 
@@ -199,7 +200,7 @@ int main(const int argc,char **argv) {
     }
 
     const struct fd_handler management = {
-            .handle_read       = NULL, //TODO: set to management_passive_accept
+            .handle_read       = mgmt_passive_accept,
             .handle_write      = NULL,
             .handle_close      = NULL, // nothing to free
     };

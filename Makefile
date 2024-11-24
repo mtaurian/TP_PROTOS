@@ -1,9 +1,9 @@
 include ./Makefile.inc
 
 SHARED_SOURCES=$(wildcard src/shared/*.c)
-SERVER_SOURCES=$(wildcard src/server/*.c)
+SERVER_SOURCES=$(wildcard src/server/*.c src/server/manager/*.c  src/server/manager/manager_states_definition/*.c)
 STATES_SOURCES=$(wildcard src/server/states_definition/*.c)
-CLIENT_SOURCES=$(wildcard src/management/*.c src/management/client/*.c src/management/manager/*.c)
+CLIENT_SOURCES=$(wildcard src/management/*.c src/management/client/*.c)
 
 OUTPUT_FOLDER=./bin
 MANAGEMENT_OUTPUT_FOLDER=./bin/management
@@ -28,7 +28,7 @@ manager_client: $(CLIENT_OUTPUT_FILE)
 
 $(SERVER_OUTPUT_FILE): $(SERVER_OBJECTS) $(SHARED_OBJECTS) $(STATES_OBJECTS)
 	mkdir -p $(OUTPUT_FOLDER)
-	$(COMPILER) $(CFLAGS) $(LDFLAGS) $(SERVER_OBJECTS) $(SHARED_OBJECTS) $(STATES_OBJECTS) -o $(SERVER_OUTPUT_FILE)
+	$(COMPILER) $(CFLAGS) $(LDFLAGS) $(SERVER_OBJECTS) $(SHARED_OBJECTS) $(STATES_OBJECTS)  -o $(SERVER_OUTPUT_FILE)
 
 $(CLIENT_OUTPUT_FILE): $(CLIENT_OBJECTS)
 	mkdir -p $(MANAGEMENT_OUTPUT_FOLDER)
@@ -40,6 +40,8 @@ obj/%.o: src/%.c
 	mkdir -p $(OBJECTS_FOLDER)/management
 	mkdir -p $(OBJECTS_FOLDER)/management/client
 	mkdir -p $(OBJECTS_FOLDER)/management/manager
+	mkdir -p $(OBJECTS_FOLDER)/server/manager
+	mkdir -p $(OBJECTS_FOLDER)/server/manager/manager_states_definition
 	mkdir -p $(OBJECTS_FOLDER)/shared
 	$(COMPILER) $(COMPILERFLAGS) -c $< -o $@
 
