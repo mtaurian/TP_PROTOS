@@ -284,7 +284,7 @@ user_data *validate_user(char *username, char *password) {
 
 unsigned int load_mailbox(user_data *user) {
     char *user_maildir = malloc(PATH_MAX);
-    snprintf(user_maildir, PATH_MAX, "%s",server->maildir);
+    snprintf(user_maildir, PATH_MAX, "%s/%s",server->maildir, user->name);
 
     DIR *dir = opendir(user_maildir);
     if (!dir) {
@@ -292,68 +292,68 @@ unsigned int load_mailbox(user_data *user) {
         return 0; // no mails // TODO: error handling
     }
 
-    if(user->mailbox == NULL) {
-        closedir(dir);
-        free(user_maildir);
-        return 0;
-    }
-
     user->mailbox->mails = malloc(MAX_MAILS * sizeof(mail));
+
+    char *current_dir = malloc(PATH_MAX);
+    snprintf(current_dir, PATH_MAX, "%s", user_maildir);
 
     struct dirent *entry;
     int count = 0;
     size_t total_size = 0;
-    char * current_dir = malloc(PATH_MAX);
-    snprintf(current_dir, PATH_MAX, "%s", user_maildir);
 
-    for(int i = 0; i < DIR_AMOUNT && (entry = readdir(dir)) != NULL; i++) {
-        if(entry->d_type == DT_DIR){
-            memset(current_dir, 0, PATH_MAX);
-            snprintf(current_dir, PATH_MAX,"%s/%s", user_maildir, entry->d_name);
-            dir = opendir(current_dir);
-            if (!dir) {
-                free(current_dir);
-                free(user_maildir);
-                return 0; // no mails // TODO: error handling
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_DIR) {
+            // Ignore `.` y `..`
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+                continue;
             }
-        } else {
-            // TODO: error management
-        }
 
-        while ((entry = readdir(dir)) != NULL && count < MAX_MAILS) {
-            if (entry->d_type == DT_REG) {
-                mail *mail = &user->mailbox->mails[count];
+            snprintf(current_dir, PATH_MAX, "%s/%s", user_maildir, entry->d_name);
+            printf("Direc: %s\n", current_dir);
 
-                mail->filename = malloc(PATH_MAX);
-                snprintf(mail->filename, PATH_MAX, "%s/%s", current_dir, entry->d_name);
+            DIR *subdir = opendir(current_dir);
+            if (!subdir) {
+                perror("Error abriendo subdirectorio");
+                continue;
+            }
 
-                mail->id = count + 1;
+            struct dirent *sub_entry;
+            while ((sub_entry = readdir(subdir)) != NULL && count < MAX_MAILS) {
+                if (sub_entry->d_type == DT_REG) {
+                    mail *mail = &user->mailbox->mails[count];
+                    mail->filename = malloc(PATH_MAX);
+                    snprintf(mail->filename, PATH_MAX, "%s/%s", current_dir, sub_entry->d_name);
+                    printf("Direc: %s\n", mail->filename);
 
-                mail->size = get_file_size(mail->filename);
-                mail->deleted = 0;
-                mail->fd = -1;
+                    mail->id = count + 1;
+                    mail->size = get_file_size(mail->filename);
+                    mail->deleted = 0;
+                    mail->fd = -1;
 
-                if (!mail->filename || mail->size == 0) {
-                    closedir(dir);
-                    free(user_maildir);
-                    free(current_dir);
-                    return 0;   // TODO: error handling, failing to load an email
+                    if (!mail->filename || mail->size == 0) {
+                        closedir(subdir);
+                        free(user_maildir);
+                        free(current_dir);
+                        return 0;
+                    }
+
+                    total_size += mail->size;
+                    count++;
                 }
-
-                total_size += mail->size;
-                count++;
             }
+
+            closedir(subdir);
         }
     }
-
-
 
     closedir(dir);
     user->mailbox->mail_count = count;
     user->mailbox->mails_size = total_size;
     free(user_maildir);
     free(current_dir);
+
     return 1;
+
 }
 
 size_t get_file_size(const char *filename) {
