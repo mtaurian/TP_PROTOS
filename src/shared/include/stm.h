@@ -1,5 +1,7 @@
 #ifndef STM_H_wL7YxN65ZHqKGvCPrNbPtMJgL8B
 #define STM_H_wL7YxN65ZHqKGvCPrNbPtMJgL8B
+#include <stdlib.h>
+#include "selector.h"
 
 /**
  * stm.c - pequeño motor de maquina de estados donde los eventos son los
@@ -34,8 +36,6 @@ struct state_machine {
     const struct state_definition *current;
 };
 
-struct selector_key *key;
-
 /**
  * definición de un estado de la máquina de estados
  */
@@ -54,8 +54,7 @@ struct state_definition {
     unsigned (*on_read_ready) (struct selector_key *key);
     /** ejecutado cuando hay datos disponibles para ser escritos */
     unsigned (*on_write_ready)(struct selector_key *key);
-    /** ejecutado cuando hay una resolución de nombres lista */
-    unsigned (*on_block_ready)(struct selector_key *key);
+
 };
 
 
@@ -69,11 +68,11 @@ stm_state        (struct state_machine *stm);
 
 /** indica que ocurrió el evento read. retorna nuevo id de nuevo estado. */
 unsigned
-stm_handler_read(struct state_machine *stm, struct selector_key *key);
+stm_handler_read(struct state_machine *stm, struct selector_key *_key);
 
 /** indica que ocurrió el evento write. retorna nuevo id de nuevo estado. */
 unsigned
-stm_handler_write(struct state_machine *stm, struct selector_key *key);
+stm_handler_write(struct state_machine *stm, struct selector_key *_key);
 
 /** indica que ocurrió el evento block. retorna nuevo id de nuevo estado. */
 unsigned
@@ -81,6 +80,6 @@ stm_handler_block(struct state_machine *stm, struct selector_key *key);
 
 /** indica que ocurrió el evento close. retorna nuevo id de nuevo estado. */
 void
-stm_handler_close(struct state_machine *stm, struct selector_key *key);
+stm_handler_close(struct state_machine *stm, struct selector_key *_key);
 
 #endif

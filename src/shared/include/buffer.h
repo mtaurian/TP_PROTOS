@@ -125,6 +125,11 @@ buffer_read(buffer *b);
 void
 buffer_write(buffer *b, uint8_t c);
 
+/** Escribe un string.
+ * Retorna la cantidad de bytes que pudo copiar*/
+uint8_t
+buffer_write_string(buffer *b, uint8_t *c);
+
 /**
  * compacta el buffer
  */

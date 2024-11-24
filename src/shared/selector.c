@@ -596,12 +596,7 @@ void selector_print_fds(fd_selector s) {
         printf("Selector is NULL\n");
         return;
     }
-
-    printf("File descriptors being observed:\n");
     for (int i = 0; i <= s->max_fd; i++) {
         struct item *item = s->fds + i;
-        if (ITEM_USED(item)) {
-            printf("FD: %d, Interest: %d\n", i, item->interest);
-        }
     }
 }

@@ -2,7 +2,7 @@
  * stm.c - pequeño motor de maquina de estados donde los eventos son los
  *         del selector.c
  */
-#include <stdlib.h>
+#include <stdio.h>
 #include "include/stm.h"
 
 #define N(x) (sizeof(x)/sizeof((x)[0]))
@@ -24,72 +24,61 @@ stm_init(struct state_machine *stm) {
 }
 
 inline static void
-handle_first(struct state_machine *stm, struct selector_key *key) {
+handle_first(struct state_machine *stm, struct selector_key *_key) {
     if(stm->current == NULL) {
         stm->current = stm->states + stm->initial;
         if(NULL != stm->current->on_arrival) {
-            stm->current->on_arrival(stm->current->state, key);
+            stm->current->on_arrival(stm->current->state, _key);
         }
     }
 }
 
 inline static
-void jump(struct state_machine *stm, unsigned next, struct selector_key *key) {
+void jump(struct state_machine *stm, unsigned next, struct selector_key *_key) {
     if(next > stm->max_state) {
         abort();
     }
     if(stm->current != stm->states + next) {
         if(stm->current != NULL && stm->current->on_departure != NULL) {
-            stm->current->on_departure(stm->current->state, key);
+            stm->current->on_departure(stm->current->state, _key);
         }
         stm->current = stm->states + next;
 
         if(NULL != stm->current->on_arrival) {
-            stm->current->on_arrival(stm->current->state, key);
+            stm->current->on_arrival(stm->current->state, _key);
         }
     }
 }
 
 unsigned
-stm_handler_read(struct state_machine *stm, struct selector_key *key) {
-    handle_first(stm, key);
-    if(stm->current->on_read_ready == 0) {
+stm_handler_read(struct state_machine *stm, struct selector_key *_key) {
+    handle_first(stm, _key);
+    if(stm->current->on_read_ready == NULL) {
         abort();
     }
-    const unsigned int ret = stm->current->on_read_ready(key);
-    jump(stm, ret, key);
+    const unsigned int ret = stm->current->on_read_ready(_key);
+    jump(stm, ret, _key);
 
     return ret;
 }
 
 unsigned
-stm_handler_write(struct state_machine *stm, struct selector_key *key) {
-    handle_first(stm, key);
-    if(stm->current->on_write_ready == 0) {
+stm_handler_write(struct state_machine *stm, struct selector_key *_key) {
+    handle_first(stm, _key);
+    if(stm->current->on_write_ready == NULL) {
         abort();
     }
-    const unsigned int ret = stm->current->on_write_ready(key);
-    jump(stm, ret, key);
+    const unsigned int ret = stm->current->on_write_ready(_key);
+    jump(stm, ret, _key);
 
     return ret;
 }
 
-unsigned
-stm_handler_block(struct state_machine *stm, struct selector_key *key) {
-    handle_first(stm, key);
-    if(stm->current->on_block_ready == 0) {
-        abort();
-    }
-    const unsigned int ret = stm->current->on_block_ready(key);
-    jump(stm, ret, key);
-
-    return ret;
-}
 
 void
-stm_handler_close(struct state_machine *stm, struct selector_key *key) {
+stm_handler_close(struct state_machine *stm, struct selector_key *_key) {
     if(stm->current != NULL && stm->current->on_departure != NULL) {
-        stm->current->on_departure(stm->current->state, key);
+        stm->current->on_departure(stm->current->state, _key);
     }
 }
 

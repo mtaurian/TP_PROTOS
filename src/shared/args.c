@@ -6,6 +6,8 @@
 #include <getopt.h>
 
 #include "include/args.h"
+#include "../server/include/pop3.h"
+
 
 static unsigned short
 port(const char *s) {
@@ -22,20 +24,7 @@ port(const char *s) {
      return (unsigned short)sl;
 }
 
-static void
-user(char *s, struct users *user) {
-    char *p = strchr(s, ':');
-    if(p == NULL) {
-        fprintf(stderr, "password not found\n");
-        exit(1);
-    } else {
-        *p = 0;
-        p++;
-        user->name = s;
-        user->pass = p;
-    }
 
-}
 
 static void
 version(void) {
@@ -118,7 +107,7 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
                     fprintf(stderr, "maximun number of command line users reached: %d.\n", MAX_USERS);
                     exit(1);
                 } else {
-                    user(optarg, args->users + nusers);
+                    user(optarg);
                     nusers++;
                 }
                 break;
@@ -127,7 +116,7 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
                 exit(0);
                 break;
             case 'd':
-                args->maildir = optarg;
+                set_maildir(optarg);
                 break;
             case 't':
                 //TODO implementar
