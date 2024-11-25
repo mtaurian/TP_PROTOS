@@ -24,13 +24,15 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
         case USER:
             if(handle_user(key, entry.arg)){
                 ret = AUTHORIZATION_PASSWORD;
-                write_std_response(1,NULL, key);
+                write_ok_message(key, JUST_OK);
             } else { // not a valid user
                 write_error_message(key, AUTHENTICATION_FAILED);
             }
             break;
         case QUIT:
-            handle_quit(key);
+            write_ok_message(key, LOGOUT_OUT);
+            printf("Quitting\n");
+            //handle_quit(key);
             break;
         case PASS:
             write_error_message(key, NO_USERNAME_GIVEN);

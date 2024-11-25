@@ -67,7 +67,9 @@ typedef enum errors {
     MESSAGE_ALREADY_DELETED,
     INTERNAL_ERROR,
     CANNOT_ADD_USER,
-    CANNOT_DEL_USER
+    CANNOT_DEL_USER,
+    COULD_NOT_READ_MAIL_FILE,
+    JUST_ERR,
 } errors;
 
 typedef struct complete_error {
@@ -76,8 +78,12 @@ typedef struct complete_error {
 } complete_error;
 
 typedef enum oks {
-    AUTHENTICATION_SUCCESSFUL = 0,
+    INITIAL_BANNER = 0,
+    AUTHENTICATION_SUCCESSFUL,
     MARKED_TO_BE_DELETED,
+    LOGOUT_OUT_MESSAGES_DELETED,
+    LOGOUT_OUT,
+    JUST_OK
 } oks;
 
 typedef struct complete_ok {

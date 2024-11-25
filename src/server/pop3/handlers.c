@@ -11,12 +11,13 @@ int handle_user(struct selector_key *key, char * username){
     strcpy(clientData->username, username);
 
     printf("[POP3] Username set: %s\n", username);
-    return 1;
+    return OK;
 }
 
 void handle_quit(struct selector_key *key){
+    printf("in handle_quit PRE close_client\n");
     close_client(key);
-	write_std_response(1,"Goodbye", key);
+    printf("in handle_quit POST close_client\n");
 }
 
 int handle_pass(struct selector_key *key, char * password){
@@ -41,30 +42,43 @@ int handle_stat(struct selector_key *key){
   	return 1;
 }
 
-int handle_list(struct selector_key *key, char * mail_number){
-  	int mail_id;
+void handle_list(struct selector_key *key, char * mail_number){
     client_data * clientData = ATTACHMENT(key);
     t_mailbox * mailbox = clientData->user->mailbox;
 
-    if(mail_number == NULL) {
-        mail_id = -1;
-    } else {
-        mail_id = atoi(mail_number);   // TODO: list -1 returns same error as the rest
+  	long mail_id;
+	char response[MAX_RESPONSE_SIZE];
+	char *endptr;
+
+    if(*mail_number != '\0' ){
+        mail_id = strtol(mail_number, &endptr, 10);
+		if (*endptr != '\0') {
+			write_error_message_with_arg(key, NOICE_AFTER_MESSAGE, endptr);
+			endptr = NULL;
+			return;
+		}
+	    if (mail_id > 0) {
+    		printf("[POP3] List mail number:%ld\n", mail_id);
+	        if (mail_id <= mailbox->mail_count){
+	        	if(!mailbox->mails[mail_id - 1].deleted) {
+	        		snprintf(response, sizeof(response), "%ld %zu", mail_id, mailbox->mails[mail_id - 1].size);
+	        		write_std_response(OK,response, key);
+	        		return;
+	        	}	else {
+	        		write_error_message(key,MESSAGE_ALREADY_DELETED);
+	        		return;
+	        	}
+	        } else {
+				write_error_message_with_arg(key,NO_MESSAGE,mail_number);
+        		return;
+	        }
+	    } else {
+			write_error_message_with_arg(key,INVALID_MESSAGE_NUMBER,mail_number);
+	    	return;
+	    }
     }
 
-    char *response = malloc(MAX_RESPONSE_SIZE);
 
-    if (mail_id > 0) {
-        if (mail_id <= mailbox->mail_count && !mailbox->mails[mail_id - 1].deleted) {
-            snprintf(response, sizeof(response), "%d %zu\r\n", mail_id, mailbox->mails[mail_id - 1].size);
-            write_std_response(1,response, key);
-        } else {
-            free(response);
-          	return 0;
-        }
-        free(response);
-        return 1;
-    }
 
     snprintf(response, MAX_RESPONSE_SIZE, "%d messages (%zu octets)\r\n", mailbox->mail_count, mailbox->mails_size);
 
@@ -75,77 +89,91 @@ int handle_list(struct selector_key *key, char * mail_number){
         	strcat(response, mail_info);
     	}
 	}
-    strcat(response, ".\r\n");
+    strcat(response, ".");
 
-	write_std_response(1, response, key);
+	write_std_response(OK, response, key);
 
-    free(response);
-
-	return 1;
+	return;
 }
 
-int handle_retr(struct selector_key *key, char *mail_number) {
+void handle_retr(struct selector_key *key, char *mail_number) {
 	client_data *clientData = ATTACHMENT(key);
+
 	t_mailbox *mailbox = clientData->user->mailbox;
+	long mail_id;
+	char *endptr;
+	if (*mail_number != '\0') {
+		mail_id = strtol(mail_number, &endptr, 10);
+		if (*endptr != '\0') {
+			write_error_message_with_arg(key, NOICE_AFTER_MESSAGE, endptr);
+			endptr = NULL;
+			return;
+		}
+		if (mail_id > 0) {
+			if (mail_id <= mailbox->mail_count) {
+				if (!mailbox->mails[mail_id - 1].deleted) {
+					mail *mail = &mailbox->mails[mail_id - 1];
+					if (mail->fd < 0) {
+						mail->fd = open(mail->filename, O_RDONLY | O_NONBLOCK);
+						if (mail->fd < 0) {
+							perror("Error opening mail file");//TODO logear en servidor que no se pudo abrir el archivo
+							write_error_message(key, COULD_NOT_READ_MAIL_FILE);
+							return;
+						}
+					}
 
-	int mail_id = atoi(mail_number); // TODO: atoi breaks when float
+					char *buffer = malloc(BUFFER_SIZE);
+					char *response = malloc(BUFFER_SIZE);
+					size_t response_len = 0;
 
-	if (mail_id <= 0 || mail_id > mailbox->mail_count || mailbox->mails[mail_id - 1].deleted) {
-		return 0; // TODO eror management
-	}
+					strcpy(response, "message follows\r\n");
+					response_len = strlen(response);
 
-	mail *mail = &mailbox->mails[mail_id - 1];
+					ssize_t bytes_read;
+					while ((bytes_read = read(mail->fd, buffer, BUFFER_SIZE)) > 0) {
+						buffer[bytes_read] = '\0';
+						if (response_len + bytes_read + 1 > BUFFER_SIZE) {
+							response = realloc(response, response_len + bytes_read + 1);
+						}
+						strncat(response, buffer, bytes_read);
+						response_len += bytes_read;
+					}
 
-	if (mail->fd < 0) {
-		mail->fd = open(mail->filename, O_RDONLY | O_NONBLOCK);
-		if (mail->fd < 0) {
-			perror("Error opening mail file");
-			return 0;
+					if (bytes_read < 0) {
+						if (errno == EAGAIN || errno == EWOULDBLOCK) {
+							//
+						} else {
+							perror("Error reading mail file"); // TODO error management
+							write_error_message(key, COULD_NOT_READ_MAIL_FILE);
+						}
+						free(response);
+						free(buffer);
+						mail->fd = -1;
+						close(mail->fd);
+						return;
+					}
+
+					strcat(response, "\n.");
+					write_std_response(OK, response, key);
+
+					close(mail->fd);
+					mail->fd = -1;
+
+					free(response);
+					free(buffer);
+
+					return;
+				} else {
+					write_error_message(key, MESSAGE_ALREADY_DELETED);
+					return;
+				}
+			} else {
+				write_error_message_with_arg(key, NO_MESSAGE, mail_number);
+				return ;
+			}
 		}
 	}
-
-	char * buffer = malloc(BUFFER_SIZE);
-    char * response = malloc(BUFFER_SIZE);
-	size_t response_len = 0;
-
-	strcpy(response, "message follows\r\n");
-	response_len = strlen(response);
-
-	ssize_t bytes_read;
-	while ((bytes_read = read(mail->fd, buffer, BUFFER_SIZE)) > 0) {
-		buffer[bytes_read] = '\0';
-		if (response_len + bytes_read + 1 > BUFFER_SIZE) {
-			response = realloc(response, response_len + bytes_read + 1);
-		}
-		strncat(response, buffer, bytes_read);
-		response_len += bytes_read;
-	}
-
-	if (bytes_read < 0) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-             //
-		} else {
-			perror("Error reading mail file"); // TODO error management
-			write_std_response(0, "-ERR Could not read mail file\r\n", key);
-		}
-        free(response);
-		free(buffer);
-        mail->fd = -1;
-    	close(mail->fd);
-		return 0;
-
-	}
-
-	strcat(response, "\n.\r\n");
-	write_std_response(1, response, key);
-
-	close(mail->fd);
-	mail->fd = -1;
-
-	free(response);
-	free(buffer);
-
-	return 1;
+	write_error_message_with_arg(key, INVALID_MESSAGE_NUMBER, mail_number);
 }
 
 
@@ -187,32 +215,46 @@ void handle_dele(struct selector_key *key, char * mail_number){
     mailbox->mail_count--;
     mailbox->deleted_count++;
     
-	write_std_response(OK, "Marked to be deleted.", key);
+	write_ok_message(key, MARKED_TO_BE_DELETED);
   	return;
 }
 
-int handle_rset(struct selector_key *key){
+void handle_rset(struct selector_key *key){
   	client_data * clientData = ATTACHMENT(key);
+	t_mailbox * mailbox = clientData->user->mailbox;
+
     int rset_amount = 0;
-    for(int i = 0; i < (clientData->user->mailbox->mail_count + clientData->user->mailbox->deleted_count); i++){
-		if(clientData->user->mailbox->mails[i].deleted){
-      		clientData->user->mailbox->mails[i].deleted = 0;
-            clientData->user->mailbox->mails_size += clientData->user->mailbox->mails[i].size;
-            clientData->user->mailbox->mail_count++;
-            clientData->user->mailbox->deleted_count--;
-            rset_amount++;
+    for(int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++){
+		if(mailbox->mails[i].deleted){
+      		mailbox->mails[i].deleted = FALSE;
+            mailbox->mails_size += clientData->user->mailbox->mails[i].size;
+            mailbox->mail_count++;
+            mailbox->deleted_count--;
         }
 	}
-    return rset_amount;
+    write_ok_message(key, JUST_OK);
+    return;
 }
 
 void handle_update_quit(struct selector_key *key){
+    printf("in handle_update_quit\n");
 	client_data * clientData = ATTACHMENT(key);
     t_mailbox * mailbox = clientData->user->mailbox;
+
+    boolean has_message_been_deleted = FALSE;
 	for (int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++) {
 		if (mailbox->mails[i].deleted) {
+            has_message_been_deleted = TRUE;
+            printf("Deleting message %s\n", mailbox->mails[i].filename);
 			remove(mailbox->mails[i].filename);
 		}
 	}
+    if(has_message_been_deleted){
+        write_ok_message(key, LOGOUT_OUT_MESSAGES_DELETED);
+    } else {
+        write_ok_message(key, LOGOUT_OUT);
+    }
+    printf("Exiting handle_update_quit PRE handle_quit\n");
     handle_quit(key);
+    printf("Exiting handle_update_quit POST handle_quit\n");
 }

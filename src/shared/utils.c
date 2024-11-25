@@ -31,11 +31,18 @@ struct complete_error errors_list[] = {
     { .type = INTERNAL_ERROR,           .message = "[MGMT] Internal server error." },
     { .type = CANNOT_ADD_USER,          .message = "[MGMT] Cannot add user." },
     { .type = CANNOT_DEL_USER,          .message = "[MGMT] Cannot delete user." },
+    { .type = COULD_NOT_READ_MAIL_FILE, .message = "Could not read mail file." },
+    { .type = JUST_ERR,                 .message = NULL }
 
 };
 
 struct complete_ok oks_list[] = {
-    { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Authentication successful" },
+    { .type = INITIAL_BANNER,               .message = "POP3 server ready." },
+    { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Logged in." },
+    { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted." },
+    { .type = LOGOUT_OUT,                   .message = "Logging out." },
+    { .type = LOGOUT_OUT_MESSAGES_DELETED,  .message = "Logging out, messages deleted." },
+    { .type = JUST_OK,                      .message = NULL }
 };
 
 
@@ -44,7 +51,7 @@ struct complete_ok oks_list[] = {
 */
 commands findCommand(char *command) {
     for (int i = 0; i < COMMAND_AMOUNT; i++) {
-        if (strcmp(command, all_commands[i].string) == 0) {
+        if (strcmp(toLower(command), all_commands[i].string) == 0) {
             return all_commands[i].command;
         }
     }
@@ -53,7 +60,7 @@ commands findCommand(char *command) {
 
 
 user_request parse(struct selector_key * key) {
-    user_request result = (struct user_request){.arg = NULL, .is_valid = false, .command = INVALID};
+    user_request result = (struct user_request){ .is_valid = false, .command = INVALID};
     struct client_data * client_Data = ATTACHMENT(key);
     if(!buffer_can_read(&client_Data->clientBuffer)){
         return result;
