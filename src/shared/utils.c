@@ -2,47 +2,47 @@
 #include "../server/pop3/include/pop3.h"
 
 struct command_struct all_commands[COMMAND_AMOUNT] = {
-    { .string = "user", .command = USER, .has_params = TRUE },
-    { .string = "pass", .command = PASS, .has_params = TRUE  },
-    { .string = "stat", .command = STAT, .has_params = FALSE  },
-    { .string = "list", .command = LIST, .has_params = FALSE  }, // list can have argument
-    { .string = "retr", .command = RETR, .has_params = TRUE  },
-    { .string = "dele", .command = DELE, .has_params = TRUE  },
-    { .string = "noop", .command = NOOP, .has_params = FALSE  },
-    { .string = "rset", .command = RSET, .has_params = FALSE  },
-    { .string = "quit", .command = QUIT, .has_params = FALSE  },
-    { .string = "users", .command = USERS, .has_params = FALSE},
-    { .string = "addu", .command = ADD_USER,    .has_params = TRUE},
-    { .string = "deleu", .command = DELETE_USER, .has_params = TRUE},
-    { .string = "metrics", .command = METRICS,     .has_params = FALSE},
-    { .string = "logs", .command = ACCESS_LOG,   .has_params = FALSE},
-    { .string = "login", .command = LOGIN,   .has_params = TRUE},
-    { .string = "", .command = INVALID, .has_params = FALSE},
+    { .string = "user",     .command = USER,        .has_params = TRUE  },
+    { .string = "pass",     .command = PASS,        .has_params = TRUE  },
+    { .string = "stat",     .command = STAT,        .has_params = FALSE },
+    { .string = "list",     .command = LIST,        .has_params = FALSE }, // list can have argument
+    { .string = "retr",     .command = RETR,        .has_params = TRUE  },
+    { .string = "dele",     .command = DELE,        .has_params = TRUE  },
+    { .string = "noop",     .command = NOOP,        .has_params = FALSE },
+    { .string = "rset",     .command = RSET,        .has_params = FALSE },
+    { .string = "quit",     .command = QUIT,        .has_params = FALSE },
+    { .string = "users",    .command = USERS,       .has_params = FALSE },
+    { .string = "addu",     .command = ADD_USER,    .has_params = TRUE  },
+    { .string = "deleu",    .command = DELETE_USER, .has_params = TRUE  },
+    { .string = "metrics",  .command = METRICS,     .has_params = FALSE },
+    { .string = "logs",     .command = ACCESS_LOG,  .has_params = FALSE },
+    { .string = "login",    .command = LOGIN,       .has_params = TRUE  },
+    { .string = "",         .command = INVALID,     .has_params = FALSE },
 };
 
 struct complete_error errors_list[] = {
-    { .type = NO_USERNAME_GIVEN,        .message = "No username given." },
+    { .type = NO_USERNAME_GIVEN,        .message = "No username given."            },
     { .type = AUTHENTICATION_FAILED,    .message = "[AUTH] Authentication failed." },
-    { .type = INVALID_MESSAGE_NUMBER,   .message = "Invalid message number: " },
-    { .type = NO_MESSAGE,               .message = "There's no message " },
-    { .type = UNKNOWN_COMMAND,          .message = "Unknown command." },
-    { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " },
-    { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." },
+    { .type = INVALID_MESSAGE_NUMBER,   .message = "Invalid message number: "      },
+    { .type = NO_MESSAGE,               .message = "There's no message "           },
+    { .type = UNKNOWN_COMMAND,          .message = "Unknown command."              },
+    { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: "  },
+    { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted."           },
     { .type = INTERNAL_ERROR,           .message = "[MGMT] Internal server error." },
-    { .type = CANNOT_ADD_USER,          .message = "[MGMT] Cannot add user." },
-    { .type = CANNOT_DEL_USER,          .message = "[MGMT] Cannot delete user." },
-    { .type = COULD_NOT_READ_MAIL_FILE, .message = "Could not read mail file." },
-    { .type = JUST_ERR,                 .message = NULL }
+    { .type = CANNOT_ADD_USER,          .message = "[MGMT] Cannot add user."       },
+    { .type = CANNOT_DEL_USER,          .message = "[MGMT] Cannot delete user."    },
+    { .type = COULD_NOT_READ_MAIL_FILE, .message = "Could not read mail file."     },
+    { .type = JUST_ERR,                 .message = NULL                            }
 
 };
 
 struct complete_ok oks_list[] = {
-    { .type = INITIAL_BANNER,               .message = "POP3 server ready." },
-    { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Logged in." },
-    { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted." },
-    { .type = LOGOUT_OUT,                   .message = "Logging out." },
+    { .type = INITIAL_BANNER,               .message = "POP3 server ready."             },
+    { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Logged in."                     },
+    { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted."          },
+    { .type = LOGOUT_OUT,                   .message = "Logging out."                   },
     { .type = LOGOUT_OUT_MESSAGES_DELETED,  .message = "Logging out, messages deleted." },
-    { .type = JUST_OK,                      .message = NULL }
+    { .type = JUST_OK,                      .message = NULL                             }
 };
 
 
