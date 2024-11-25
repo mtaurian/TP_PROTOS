@@ -150,24 +150,44 @@ int handle_retr(struct selector_key *key, char *mail_number) {
 
 
 
-int handle_dele(struct selector_key *key, char * mail_number){
+void handle_dele(struct selector_key *key, char * mail_number){
     client_data * clientData = ATTACHMENT(key);
 	t_mailbox * mailbox = clientData->user->mailbox;
-  	int mail_id = atoi(mail_number);  // TODO: atoi breaks when float
 
-    if(mail_id <= 0 || mail_id > mailbox->mail_count || mailbox->mails[mail_id - 1].deleted){
-		return 0;
+    long mail_id = 0;
+
+    char endptr;
+    if(mail_number == NULL) {
+        mail_id = -1;
+    } else {
+        mail_id = strtol(mail_number, &endptr, 10);
+    }
+    if (endptr != '\0') {
+        write_error_message_with_arg(key, NOICE_AFTER_MESSAGE, &endptr);
+    }
+
+    if(mail_id == -1){
+        write_error_message_with_arg(key, INVALID_MESSAGE_NUMBER, &endptr);
+        return;
+    }
+
+    if(mail_id > mailbox->mail_count){
+        write_error_message_with_arg(key, NO_MESSAGE, &endptr);
+        return;
+    }
+
+    if(mailbox->mails[mail_id - 1].deleted){
+        write_error_message_with_arg(key, MESSAGE_ALREADY_DELETED, &endptr);
+		return;
 	}
 
-    mailbox->mails[mail_id - 1].deleted = 1;
+    mailbox->mails[mail_id - 1].deleted = TRUE;
     mailbox->mails_size -= mailbox->mails[mail_id - 1].size;
     mailbox->mail_count--;
     mailbox->deleted_count++;
-    char * response = malloc(MAX_RESPONSE_SIZE);
-    snprintf(response, MAX_RESPONSE_SIZE, "message %d deleted\r\n", mail_id);
-	write_std_response(1, response,key);
-    free(response);
-  	return 1;
+    
+	write_std_response(OK, "Marked to be deleted.", key);
+  	return;
 }
 
 int handle_rset(struct selector_key *key){

@@ -31,10 +31,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		}
       		break;
     	case DELE:
-      		if(!handle_dele(key, entry->arg)){
-                snprintf(message, MAX_RESPONSE_SIZE, "message %d already deleted\r\n", atoi(entry->arg)); // TODO: validacion con negativos
-				write_std_response(0, message, key);
-      		}
+      		handle_dele(key, entry->arg);
       		break;
     	case NOOP:
       		write_std_response(OK, NULL, key);
