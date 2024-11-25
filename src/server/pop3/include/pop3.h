@@ -54,6 +54,7 @@ struct pop3_server {
     char* maildir;
     size_t historic_connections; //volatile :/
     pthread_mutex_t  hc_mutex; // historic connections mutex
+    size_t bytes_transferred;
 };
 
 typedef enum pop3_states {
@@ -79,13 +80,15 @@ void free_mailbox(t_mailbox* mails);
 
 
 // for management server
+unsigned int get_current_connections();
+size_t get_bytes_transferred();
 size_t get_historic_connections();
 user_data ** get_users();
 size_t get_users_amount();
 unsigned char add_user(char * user_and_pass);
 unsigned char validate_user_not_exists(char * username);
 unsigned char delete_user(char * username);
-
+void add_bytes_transferred(size_t bytes);
 // could be in a utils file
 size_t get_file_size(const char *filename);
 #endif //POP3_H

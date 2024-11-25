@@ -5,6 +5,9 @@
 #include "../../pop3/include/pop3.h"
 #include "mgmt.h"
 
+#define MAX_RESPONSE 1024
+
+
 boolean handle_login(struct selector_key *key, char *arg);
 boolean handle_users(struct selector_key *key);
 boolean handle_add_user(struct selector_key * key, char * arg);

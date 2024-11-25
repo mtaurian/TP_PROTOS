@@ -50,6 +50,7 @@ static const struct state_definition states[] = {
 void initialize_pop3_server() {
     server = malloc(sizeof(struct pop3_server));
     server->user_amount = 0;
+    server->bytes_transferred = 0;
     server->maildir = NULL;
 
     pthread_mutex_init(&server->hc_mutex, NULL);
@@ -388,3 +389,26 @@ unsigned char delete_user(char * username){
     return FALSE;
 }
 
+size_t get_historic_connections() {
+    return server->historic_connections;
+}
+
+
+unsigned int get_current_connections() {
+    int connections = 0;
+    for (int i=0; i < server->user_amount; i++) {
+        if (server->users_list[i]->logged) {
+            connections++;
+        }
+    }
+    return connections;
+}
+
+size_t get_bytes_transferred() {
+    return server->bytes_transferred;
+}
+
+
+void add_bytes_transferred(size_t bytes) {
+    server->bytes_transferred += bytes;
+}

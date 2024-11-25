@@ -175,6 +175,8 @@ void write_handler(struct selector_key *_key) {
         goto leave;
     }
 
+    add_bytes_transferred(bytes_sent);
+
     buffer_read_adv(&clientData->responseBuffer, bytes_sent);
 
     leave:

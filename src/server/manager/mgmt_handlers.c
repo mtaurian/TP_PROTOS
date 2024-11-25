@@ -50,3 +50,20 @@ boolean handle_add_user(struct selector_key * key, char * arg){
 boolean handle_delete_user(struct selector_key * key, char * arg){
     return delete_user(arg);
 }
+
+boolean handle_metrics(struct selector_key * key){
+    unsigned int current_connections = get_current_connections();
+    size_t bytes_transferred = get_bytes_transferred();
+    unsigned int historic_connections = get_historic_connections();
+
+    char * metrics = malloc(MAX_RESPONSE);
+    if (metrics == NULL) {
+        return FALSE;
+    }
+
+    snprintf(metrics, MAX_RESPONSE, "\nCurrent connections: %u\nBytes transferred: %zu\nHistoric connections: %u\n", current_connections, bytes_transferred, historic_connections);
+
+    write_std_response(OK, metrics, key);
+    free(metrics);
+    return TRUE;
+}

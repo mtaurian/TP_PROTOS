@@ -33,7 +33,9 @@ unsigned int authenticated_on_read_ready(struct selector_key *key){
             }
             break;
         case METRICS:
-
+            if (!handle_metrics(key)){
+                write_error_message(key, INTERNAL_ERROR);
+            }
             break;
         case ACCESS_LOG:
 
