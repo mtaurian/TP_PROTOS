@@ -156,28 +156,29 @@ void handle_dele(struct selector_key *key, char * mail_number){
 
     long mail_id = 0;
 
-    char endptr;
+    char * endptr;
     if(mail_number == NULL) {
         mail_id = -1;
     } else {
         mail_id = strtol(mail_number, &endptr, 10);
     }
-    if (endptr != '\0') {
-        write_error_message_with_arg(key, NOICE_AFTER_MESSAGE, &endptr);
+    if (*endptr != '\0') {
+        write_error_message_with_arg(key, NOICE_AFTER_MESSAGE, endptr);
+        return;
     }
 
     if(mail_id == -1){
-        write_error_message_with_arg(key, INVALID_MESSAGE_NUMBER, &endptr);
+        write_error_message_with_arg(key, INVALID_MESSAGE_NUMBER, endptr);
         return;
     }
 
     if(mail_id > mailbox->mail_count){
-        write_error_message_with_arg(key, NO_MESSAGE, &endptr);
+        write_error_message_with_arg(key, NO_MESSAGE, endptr);
         return;
     }
 
     if(mailbox->mails[mail_id - 1].deleted){
-        write_error_message_with_arg(key, MESSAGE_ALREADY_DELETED, &endptr);
+        write_error_message_with_arg(key, MESSAGE_ALREADY_DELETED, endptr);
 		return;
 	}
 
