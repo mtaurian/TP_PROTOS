@@ -16,7 +16,8 @@ struct command_struct all_commands[COMMAND_AMOUNT] = {
 struct complete_error errors_list[] = {
     { .type = NO_USERNAME_GIVEN,        .message = "No username given." },
     { .type = AUTHENTICATION_FAILED,    .message = "[AUTH] Authentication failed." },
-    { .type = INVALID_MESSAGE_NUMBER,   .message = "There's no message " },
+    { .type = INVALID_MESSAGE_NUMBER,   .message = "Invalid message number: " },
+    { .type = NO_MESSAGE,               .message = "There's no message " },
     { .type = UNKNOWN_COMMAND,          .message = "Unknown command." },
     { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " },
     { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." }
