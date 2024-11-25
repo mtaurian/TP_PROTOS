@@ -150,5 +150,5 @@ buffer_can_read(buffer *b);
 bool
 buffer_can_write(buffer *b);
 
-
+void buffer_clean(uint8_t *buffer, size_t length);
 #endif

@@ -112,3 +112,7 @@ buffer_write_string(buffer *b, uint8_t *c) {
     }
     return bytes_written;
 }
+
+void buffer_clean(uint8_t *buffer, size_t length) {
+    memset(buffer, 0, length);
+}
