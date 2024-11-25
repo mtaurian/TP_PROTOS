@@ -11,16 +11,16 @@ void non_authenticated_on_departure(const unsigned state, struct selector_key *k
 }
 
 unsigned int non_authenticated_on_read_ready(struct selector_key *key) {
-    user_request *entry = parse(key);
+    user_request entry = parse(key);
     int ret = NON_AUTHENTICATED;
-    if (entry == NULL || entry->command == INVALID) {
+    if ( entry.command == INVALID) {
         write_error_message(key, UNKNOWN_COMMAND);
         return ret;
     }
 
-    switch (entry->command) {
+    switch (entry.command) {
         case LOGIN:
-            if (handle_login(key, entry->arg)) {
+            if (handle_login(key, entry.arg)) {
                 write_std_response(OK, "Logged in", key);
                 ret = AUTHENTICATED;
             } else {

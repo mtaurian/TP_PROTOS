@@ -9,14 +9,14 @@ void authenticated_on_departure(const unsigned state, struct selector_key *key) 
 }
 
 unsigned int authenticated_on_read_ready(struct selector_key *key){
-    user_request *entry = parse(key);
+    user_request entry = parse(key);
     int ret = AUTHENTICATED;
-    if (entry == NULL || entry->command == INVALID) {
+    if (entry.command == INVALID) {
         write_error_message(key, UNKNOWN_COMMAND);
         return ret;
     }
 
-    switch (entry->command) {
+    switch (entry.command) {
         case USERS:
              handle_users(key);
             break;
