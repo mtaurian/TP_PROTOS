@@ -18,10 +18,12 @@ unsigned int authenticated_on_read_ready(struct selector_key *key){
 
     switch (entry.command) {
         case USERS:
-             handle_users(key);
+             if (!handle_users(key)){
+                 write_error_message(key, INTERNAL_ERROR);
+             }
             break;
         case ADD_USER:
-
+            handle_add_user(key, entry.arg);
             break;
         case DELETE_USER:
 

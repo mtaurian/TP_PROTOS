@@ -81,7 +81,7 @@ void free_mailbox(t_mailbox* mails);
 size_t get_historic_connections();
 user_data * get_users();
 size_t get_users_amount();
-
+unsigned char add_user(char * user_and_pass);
 
 // could be in a utils file
 size_t get_file_size(const char *filename);

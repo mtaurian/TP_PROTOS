@@ -206,7 +206,7 @@ unsigned int log_user(user_data *user) {
     user->mailbox->mails_size = 0;
     user->mailbox->deleted_count = 0;
 
-    return load_mailbox(user);;
+    return load_mailbox(user);
 }
 
 void log_out_user(user_data *user) {
@@ -330,4 +330,23 @@ user_data * get_users(){
 
 size_t get_users_amount(){
     return server->user_amount;
+}
+
+unsigned char add_user(char * user_and_pass){
+    if(server->user_amount >= MAX_USERS) {
+        return FALSE;
+    } else {
+        user(user_and_pass);
+        char * path = malloc(PATH_MAX);
+        snprintf(path, PATH_MAX, "%s/%s", server->maildir, server->users_list[server->user_amount-1].name);
+        mkdir(path, 0777);
+        snprintf(path, PATH_MAX, "%s/%s/cur", server->maildir, server->users_list[server->user_amount-1].name);
+        mkdir(path, 0777);
+        snprintf(path, PATH_MAX, "%s/%s/new", server->maildir, server->users_list[server->user_amount-1].name);
+        mkdir(path, 0777);
+        snprintf(path, PATH_MAX, "%s/%s/tmp", server->maildir, server->users_list[server->user_amount-1].name);
+        mkdir(path, 0777);
+        free(path);
+        return TRUE;
+    }
 }
