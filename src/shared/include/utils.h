@@ -8,7 +8,7 @@
 
 #define MAX_COMMAND_LENGTH 50
 #define MAX_ARGUMENTS 10
-#define COMMAND_AMOUNT 10
+#define COMMAND_AMOUNT 16
 
 #define ATTACHMENT(key) ((client_data*)(key)->data)
 
@@ -18,7 +18,7 @@ typedef enum boolean {
 } boolean;
 
 typedef enum commands {
-    USER = 0, PASS, STAT, LIST, RETR, DELE, NOOP, RSET, QUIT, INVALID
+    USER = 0, PASS, STAT, LIST, RETR, DELE, NOOP, RSET, QUIT, USERS, ADD_USER, DELETE_USER, METRICS, ACCESS_LOG, LOGIN, INVALID
 } commands;
 
 typedef struct command_struct {

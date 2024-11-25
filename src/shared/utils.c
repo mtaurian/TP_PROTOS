@@ -10,8 +10,15 @@ struct command_struct all_commands[COMMAND_AMOUNT] = {
     { .string = "noop", .command = NOOP, .has_params = FALSE  },
     { .string = "rset", .command = RSET, .has_params = FALSE  },
     { .string = "quit", .command = QUIT, .has_params = FALSE  },
-    { .string = ""     ,.command = INVALID, .has_params = FALSE}
+    { .string = "users", .command = USERS, .has_params = FALSE},
+    { .string = "addu", .command = ADD_USER,    .has_params = TRUE},
+    { .string = "deleu", .command = DELETE_USER, .has_params = TRUE},
+    { .string = "metrics", .command = METRICS,     .has_params = FALSE},
+    { .string = "logs", .command = ACCESS_LOG,   .has_params = FALSE},
+    { .string = "login", .command = LOGIN,   .has_params = TRUE},
+    { .string = "", .command = INVALID, .has_params = FALSE},
 };
+
 
 
 
