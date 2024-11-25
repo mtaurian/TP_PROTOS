@@ -9,7 +9,7 @@ void auth_pass_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
-    user_request * entry = parse(key);
+    user_request entry = parse(key);
     int ret = AUTHORIZATION_PASSWORD;
 
     if(entry.command == INVALID){
