@@ -2,7 +2,7 @@
 #define TP_PROTOS_UTILS_H
 
 #include <ctype.h>
-#include "../../include/pop3.h"
+#include "../../server/pop3/include/pop3.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -32,12 +32,34 @@ typedef struct user_request {
     char arg[BUFFER_SIZE];
 } user_request;
 
+typedef struct client_data {
+    struct sockaddr_storage clientAddress;
+    bool closed;
+    int clientFd;
+
+    buffer clientBuffer;
+    uint8_t inClientBuffer[BUFFER_SIZE];
+
+    buffer responseBuffer;
+    uint8_t inResponseBuffer[BUFFER_SIZE];
+
+    char * username;
+    char * password;
+
+    user_data * user;
+    struct state_machine stm;
+
+} client_data;
+
 /*
     Parses user's request and returns a user_request or NULL if command not found
 */
 user_request * parse(struct selector_key * key);
 
 void write_std_response(char isOk, char * msg, struct selector_key * key);
+
+void read_handler(struct selector_key *_key);
+void write_handler(struct selector_key *_key);
 
 
 /*

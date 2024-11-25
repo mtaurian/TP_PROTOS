@@ -1,11 +1,11 @@
 #ifndef TP_PROTOS_AUTH_PASS_H
 #define TP_PROTOS_AUTH_PASS_H
 
-#include "../../../shared/include/selector.h"
+#include "../../../../shared/include/selector.h"
 #include "../../include/pop3.h"
 #include "../../include/handlers.h"
-#include "utils.h"
-#include "../../../shared/include/parser_utils.h"
+#include "../../../../shared/include/utils.h"
+#include "../../../../shared/include/parser_utils.h"
 
 void auth_pass_on_arrival(unsigned state, struct selector_key *key);
 void auth_pass_on_departure(unsigned state, struct selector_key *key);

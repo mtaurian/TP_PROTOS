@@ -76,9 +76,10 @@ void free_user_data(user_data *user) {
     }
 }
 
-void pop3_passive_accept(struct selector_key *_key) {
+void pop3_passive_accept(const struct selector_key *_key) {
     const char *err_msg = NULL;
     struct sockaddr_storage client_addr;
+    selector_status ss = SELECTOR_SUCCESS;
     socklen_t client_addr_len = sizeof(client_addr);
     memset(&client_addr, 0, sizeof(client_addr));
     int client_fd = accept(_key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
@@ -102,6 +103,7 @@ void pop3_passive_accept(struct selector_key *_key) {
     clientData->clientFd = client_fd;
     clientData->clientAddress = client_addr;
     clientData->username = NULL;
+    clientData->password = NULL;
     clientData->stm.states = states;
     buffer_init(&clientData->clientBuffer, BUFFER_SIZE, clientData->inClientBuffer);
     buffer_init(&clientData->responseBuffer, BUFFER_SIZE, clientData->inResponseBuffer);
@@ -109,16 +111,18 @@ void pop3_passive_accept(struct selector_key *_key) {
     clientData->stm.initial = AUTHORIZATION_USER;
     clientData->stm.max_state = UPDATE;
     stm_init(&clientData->stm);
-    selector_status ss = selector_register(_key->s, client_fd, &client_handler, OP_READ, clientData);
+    ss = selector_register(_key->s, client_fd, &client_handler, OP_READ, clientData);
     if (ss != SELECTOR_SUCCESS) {
-       err_msg = "Unable to register client socket handler";
+        err_msg = "Unable to register client socket handler";
     }
-finally:
+
+
+    finally:
     if(ss != SELECTOR_SUCCESS) {
-        fprintf(stderr, "%s: %s\n", (err_msg == NULL) ? "": err_msg,
-                                  ss == SELECTOR_IO
-                                      ? strerror(errno)
-                                      : selector_error(ss));
+        fprintf(stderr, "%s: %s\n",  err_msg,
+                ss == SELECTOR_IO
+                ? strerror(errno)
+                : selector_error(ss));
     } else if(err_msg) {
         perror(err_msg);
         free(clientData);
@@ -128,7 +132,6 @@ finally:
     }
 
 }
-
 
 void close_client(struct selector_key * _key) {
     client_data* data = ATTACHMENT(_key);
@@ -153,72 +156,7 @@ void close_client(struct selector_key * _key) {
     free(data);
 }
 
-
-void read_handler(struct selector_key *_key) {
-    const char *err_msg = NULL;
-    client_data *clientData = ATTACHMENT(_key);
-
-    size_t writable_bytes;
-    uint8_t *write_ptr = buffer_write_ptr(&clientData->clientBuffer, &writable_bytes);
-
-    // READ from socket into buffer
-    ssize_t bytes_received = recv(_key->fd, write_ptr, writable_bytes, 0);
-
-    if (bytes_received <= 0) {
-        if (bytes_received == 0) {
-            err_msg = "Client disconnected";
-        } else {
-            err_msg = "Error in recv";
-        }
-        goto leave;
-    }
-
-    buffer_write_adv(&clientData->clientBuffer, bytes_received);
-
-    // READ from socket into buffer
-    stm_handler_read(&clientData->stm, _key);
-
-    leave:
-        if (err_msg) {
-            perror(err_msg);
-            selector_unregister_fd(_key->s, _key->fd);
-            close(_key->fd);
-        } else {
-            selector_set_interest_key(_key, OP_WRITE);
-        }
-}
-
-void write_handler(struct selector_key *_key) {
-    const char *err_msg = NULL;
-    client_data *clientData = ATTACHMENT(_key);
-
-    stm_handler_write(&clientData->stm, _key);
-
-    size_t readable_bytes;
-    uint8_t *read_ptr = buffer_read_ptr(&clientData->responseBuffer, &readable_bytes);
-
-    ssize_t bytes_sent = send(_key->fd, read_ptr, readable_bytes, 0);
-
-    if (bytes_sent < 0) {
-        err_msg = "Error in send";
-        selector_unregister_fd(_key->s, _key->fd);
-        close(_key->fd);
-        goto leave;
-    }
-
-    buffer_read_adv(&clientData->responseBuffer, bytes_sent);
-
-leave:
-
-    if (err_msg) {
-        perror(err_msg);
-    } else {
-        selector_set_interest_key(_key, OP_READ);
-    }
-}
-
-
-void user(char *s) {
+void user(const char *s) {
     user_data *user = &server->users_list[server->user_amount];
     char *p = strchr(s, ':');
     if(p == NULL) {
@@ -268,9 +206,6 @@ void log_out_user(user_data *user) {
         user->mailbox = NULL;
     }
 }
-
-
-
 
 user_data *validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {

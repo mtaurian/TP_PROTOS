@@ -6,7 +6,9 @@
 #include <getopt.h>
 
 #include "include/args.h"
-#include "../server/include/pop3.h"
+
+#include "../server/manager/include/mgmt.h"
+#include "../server/pop3/include/pop3.h"
 
 
 static unsigned short
@@ -49,11 +51,12 @@ usage(const char *progname) {
         "Usage: %s [OPTION]...\n"
         "\n"
         "   -h               Imprime la ayuda y termina.\n"
-        "   -l <POP3 addr>   Dirección donde servirá el servidor POP.\n"
+        "   -l <POP3 addr>   Dirección donde servirá el servidor POP3.\n"
         "   -L <conf  addr>  Dirección donde servirá el servicio de management.\n"
         "   -p <POP3 port>   Puerto entrante conexiones POP3.\n"
         "   -P <conf port>   Puerto entrante conexiones configuracion\n"
-        "   -u <name>:<pass> Usuario y contraseña de usuario que puede usar el servidor. Hasta 10.\n"
+        "   -u <name>:<pass> Usuario y contraseña de usuario que puede usar el servidor.\n"
+        "   -U <name>:<pass> Usuario y contraseña de usuario admin que puede usar el servicio de management.\n"
         "   -v               Imprime información sobre la versión versión y termina.\n"
         "   -d <path>        Carpeta donde residen los Maildirs.\n"
         "   -t <cmd>         Comando para aplicar transformaciones"
@@ -62,8 +65,7 @@ usage(const char *progname) {
     exit(1);
 }
 
-void 
-parse_args(const int argc, char **argv, struct pop3args *args) {
+void parse_args(const int argc, char **argv, struct pop3args *args) {
     memset(args, 0, sizeof(*args)); // sobre todo para setear en null los punteros de users
 
     args->pop3_addr = "0.0.0.0";
@@ -75,6 +77,7 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
 
     int c;
     int nusers = 0;
+    int nadmins = 0;
 
     while (true) {
         int option_index = 0;
@@ -82,7 +85,7 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
             { 0,           0,                 0, 0 }
         };
 
-        c = getopt_long(argc, argv, "hl:L:p:P:u:vd:t:", long_options, &option_index);
+        c = getopt_long(argc, argv, "hl:L:p:P:u:vd:t:U:", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -120,6 +123,15 @@ parse_args(const int argc, char **argv, struct pop3args *args) {
                 break;
             case 't':
                 //TODO implementar
+                break;
+            case 'U':
+                if(nadmins >= MAX_MGMT_USERS) {
+                    fprintf(stderr, "maximun number of command line users reached: %d.\n", MAX_USERS);
+                    exit(1);
+                } else {
+                    mgmt_user(optarg);
+                    nadmins++;
+                }
                 break;
             default:
                 fprintf(stderr, "unknown argument %d.\n", c);
