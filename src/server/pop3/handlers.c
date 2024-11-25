@@ -187,7 +187,7 @@ void handle_dele(struct selector_key *key, char * mail_number){
     mailbox->mail_count--;
     mailbox->deleted_count++;
     
-	write_std_response(OK, "Marked to be deleted.", key);
+	write_ok_message(key, MARKED_TO_BE_DELETED);
   	return;
 }
 
