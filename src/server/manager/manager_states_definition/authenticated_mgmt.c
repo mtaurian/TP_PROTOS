@@ -44,6 +44,7 @@ unsigned int authenticated_on_read_ready(struct selector_key *key){
             write_error_message(key, UNKNOWN_COMMAND);
             break;
     }
+    buffer_write_string(&ATTACHMENT(key)->responseBuffer, ".\n");
     return ret;
 }
 
