@@ -72,7 +72,8 @@ typedef struct complete_error {
 } complete_error;
 
 typedef enum oks {
-    AUTHENTICATION_SUCCESSFUL = 0,
+    INITIAL_BANNER = 0,
+    AUTHENTICATION_SUCCESSFUL,
     MARKED_TO_BE_DELETED,
     LOGOUT_OUT_MESSAGES_DELETED,
     LOGOUT_OUT,

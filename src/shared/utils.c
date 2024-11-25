@@ -21,15 +21,16 @@ struct complete_error errors_list[] = {
     { .type = UNKNOWN_COMMAND,          .message = "Unknown command." },
     { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " },
     { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." },
-    { .type = COULD_NOT_READ_MAIL_FILE,  .message = "Could not read mail file." },
+    { .type = COULD_NOT_READ_MAIL_FILE, .message = "Could not read mail file." },
     { .type = JUST_ERR,                 .message = NULL }
 
 };
 
 struct complete_ok oks_list[] = {
+    { .type = INITIAL_BANNER,               .message = "POP3 server ready." },
     { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Logged in." },
     { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted." },
-    { .type = LOGOUT_OUT,                    .message = "Logging out." },
+    { .type = LOGOUT_OUT,                   .message = "Logging out." },
     { .type = LOGOUT_OUT_MESSAGES_DELETED,  .message = "Logging out, messages deleted." },
     { .type = JUST_OK,                      .message = NULL }
 };

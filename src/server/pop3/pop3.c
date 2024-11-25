@@ -1,4 +1,5 @@
 #include "include/pop3.h"
+#include "states_definition/include/initial.h"
 #include "states_definition/include/auth_user.h"
 #include "states_definition/include/auth_pass.h"
 #include "states_definition/include/transaction.h"
@@ -16,6 +17,13 @@ static const struct fd_handler client_handler = {
 };
 
 static const struct state_definition states[] = {
+    {
+        .state            = INITIAL,
+        .on_arrival       = initial_on_arrival,
+        .on_departure     = initial_on_departure,
+        .on_read_ready    = NULL,
+        .on_write_ready   = initial_on_ready_to_write,
+    },
     {
         .state            = AUTHORIZATION_USER,
         .on_arrival       = auth_user_on_arrival,
@@ -108,10 +116,10 @@ void pop3_passive_accept(const struct selector_key *_key) {
     buffer_init(&clientData->clientBuffer, BUFFER_SIZE, clientData->inClientBuffer);
     buffer_init(&clientData->responseBuffer, BUFFER_SIZE, clientData->inResponseBuffer);
 
-    clientData->stm.initial = AUTHORIZATION_USER;
+    clientData->stm.initial = INITIAL;
     clientData->stm.max_state = UPDATE;
     stm_init(&clientData->stm);
-    ss = selector_register(_key->s, client_fd, &client_handler, OP_READ, clientData);
+    ss = selector_register(_key->s, client_fd, &client_handler, OP_WRITE, clientData);
     if (ss != SELECTOR_SUCCESS) {
         err_msg = "Unable to register client socket handler";
     }

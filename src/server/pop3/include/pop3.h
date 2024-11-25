@@ -23,6 +23,8 @@
 #define MAX_MAILS 100
 #define MAILDIR_PERMISSIONS 0777
 #define DIR_AMOUNT 3
+#define MAX_USERS 505
+
 
 typedef struct mail {
     int id;
@@ -38,8 +40,6 @@ typedef struct t_mailbox {
     int mail_count; // mails that are not marked as deleted
     int deleted_count;
 } t_mailbox;
-
-#define MAX_USERS 505
 
 typedef struct user_data {
     char *name;
@@ -58,7 +58,7 @@ struct pop3_server {
 };
 
 typedef enum pop3_states {
-    AUTHORIZATION_USER = 0, AUTHORIZATION_PASSWORD, TRANSACTION, UPDATE
+    INITIAL = 0, AUTHORIZATION_USER, AUTHORIZATION_PASSWORD, TRANSACTION, UPDATE
 } pop3_states;
 
 
