@@ -23,7 +23,7 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
         case PASS:
             if(handle_pass(key, entry->arg)){
                 ret = TRANSACTION;
-                message =  "Authentication successful\n";
+                message =  "Authentication successful";
                 write_std_response(OK, message, key);
             } else { // passwords don't match
                 write_error_message(key, AUTHENTICATION_FAILED);

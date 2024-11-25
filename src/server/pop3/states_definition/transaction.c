@@ -12,9 +12,8 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
   	user_request * entry = parse(key);
     char * message = malloc(MAX_RESPONSE_SIZE);
   	int ret = TRANSACTION;
-	if(entry == NULL || entry->command == INVALID){
-		message =  "Unknown command.\n";
-		write_std_response(0, message, key);
+	if(entry->command == INVALID){
+        write_error_message(key, UNKNOWN_COMMAND);
 		return ret;
 	}
 
@@ -38,7 +37,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		}
       		break;
     	case NOOP:
-      		write_std_response(1, NULL, key);
+      		write_std_response(OK, NULL, key);
       		break;
     	case RSET:
       		int rset_amount = handle_rset(key);
@@ -49,7 +48,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
             ret = UPDATE;
       		break;
     	default:
-      		write_std_response(0, NULL, key);
+      		write_error_message(key, UNKNOWN_COMMAND);
       		break;
   	}
 
