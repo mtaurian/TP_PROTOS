@@ -1,11 +1,11 @@
 #include "./include/auth_pass.h"
 
 void auth_pass_on_arrival(unsigned state, struct selector_key *key){
-    printf("Entered in AUTH_PASS state\n");
+    printf("[POP3] Entered in AUTH_PASS state\n");
 }
 
 void auth_pass_on_departure(unsigned state, struct selector_key *key){
-    printf("Exited AUTH_PASS state\n");
+    printf("[POP3] Exited AUTH_PASS state\n");
 }
 
 unsigned int auth_pass_on_ready_to_read(struct selector_key *key){

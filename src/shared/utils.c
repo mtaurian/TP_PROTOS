@@ -102,7 +102,7 @@ void read_handler(struct selector_key *_key) {
 
     if (bytes_received <= 0) {
         if (bytes_received == 0) {
-            err_msg = "Client disconnected";
+            err_msg = "[POP3] Client disconnected";
         } else {
             err_msg = "Error in recv";
         }

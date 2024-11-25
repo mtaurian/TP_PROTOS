@@ -128,7 +128,7 @@ void pop3_passive_accept(const struct selector_key *_key) {
         free(clientData);
         close(client_fd);
     } else {
-        printf("Client connected\n");
+        printf("[POP3] Client connected\n");
     }
 
 }
@@ -181,7 +181,7 @@ void user(const char *s) {
 void set_maildir(const char *maildir) {
     server->maildir = malloc(PATH_MAX);
     strcpy(server->maildir, maildir);
-    printf("MALDIR: %s\n", server->maildir);
+    printf("[POP3] MAILDIR: %s\n", server->maildir);
 }
 
 unsigned int log_user(user_data *user) {
@@ -210,7 +210,7 @@ void log_out_user(user_data *user) {
 user_data *validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {
         if(strcmp(server->users_list[i].name, username) == 0 && strcmp(server->users_list[i].pass, password) == 0) {
-            printf("Signed in user %s\n", username); // TODO: do as a log
+            printf("[POP3] Signed in user %s\n", username); // TODO: do as a log
             return &server->users_list[i]; // TODO: return 1 or 0
         }
     }
@@ -244,11 +244,10 @@ unsigned int load_mailbox(user_data *user) {
             }
 
             snprintf(current_dir, PATH_MAX, "%s/%s", user_maildir, entry->d_name);
-            printf("Direc: %s\n", current_dir);
 
             DIR *subdir = opendir(current_dir);
             if (!subdir) {
-                perror("Error abriendo subdirectorio");
+                perror("[POP3] Error opening subdirectory");
                 continue;
             }
 
@@ -258,7 +257,6 @@ unsigned int load_mailbox(user_data *user) {
                     mail *mail = &user->mailbox->mails[count];
                     mail->filename = malloc(PATH_MAX);
                     snprintf(mail->filename, PATH_MAX, "%s/%s", current_dir, sub_entry->d_name);
-                    printf("Direc: %s\n", mail->filename);
 
                     mail->id = count + 1;
                     mail->size = get_file_size(mail->filename);

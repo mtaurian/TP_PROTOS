@@ -1,11 +1,11 @@
 #include "./include/transaction.h"
 
 void transaction_on_arrival(unsigned state, struct selector_key *key){
-  	printf("Entered in TRANSACTION state\n");
+  	printf("[POP3] Entered in TRANSACTION state\n");
 }
 
 void transaction_on_departure(unsigned state, struct selector_key *key){
-  	printf("Exited TRANSACTION state\n");
+  	printf("[POP3] Exited TRANSACTION state\n");
 }
 
 unsigned int transaction_on_ready_to_read(struct selector_key *key){

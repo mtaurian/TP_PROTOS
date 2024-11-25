@@ -111,7 +111,7 @@ int main(const int argc,char **argv) {
         goto finally;
     }
 
-    fprintf(stdout, "Listening on TCP port %d\n", pop3config->pop3_port);
+    fprintf(stdout, "[POP3] Listening on TCP port %d\n", pop3config->pop3_port);
 
     // man 7 ip. no importa reportar nada si falla.
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
@@ -170,7 +170,7 @@ int main(const int argc,char **argv) {
         goto finally;
     }
 
-    printf("Server listening\n");
+    printf("[POP3] Server listening\n");
 
     //MANAGE
     memset(&server_addr, 0, sizeof(server_addr));

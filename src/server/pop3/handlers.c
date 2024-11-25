@@ -10,7 +10,7 @@ int handle_user(struct selector_key *key, char * username){
     clientData->username = malloc((userNameLength+1) * sizeof(char));
     strcpy(clientData->username, username);
 
-    printf("Username set: %s\n", username);
+    printf("[POP3] Username set: %s\n", username);
     return 1;
 }
 
