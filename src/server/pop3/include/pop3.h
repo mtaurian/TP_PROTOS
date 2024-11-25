@@ -67,7 +67,7 @@ void free_pop3_server();
 void pop3_passive_accept(struct selector_key *_key);
 void close_client(struct selector_key *_key);
 
-void user(char *s);
+unsigned char user(char *s);
 void log_out_user(user_data *user);
 unsigned int log_user(user_data *user);
 user_data * validate_user(char *username, char *password);
@@ -82,6 +82,7 @@ size_t get_historic_connections();
 user_data * get_users();
 size_t get_users_amount();
 unsigned char add_user(char * user_and_pass);
+unsigned char validate_user_not_exists(char * username);
 
 // could be in a utils file
 size_t get_file_size(const char *filename);

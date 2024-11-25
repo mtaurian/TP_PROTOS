@@ -42,7 +42,7 @@ boolean handle_add_user(struct selector_key * key, char * arg){
         write_std_response(OK, "User added successfully", key);
         return TRUE;
     } else {
-        write_error_message(key, INTERNAL_ERROR);
+        write_error_message(key, CANNOT_ADD_USER);
         return FALSE;
     }
 }

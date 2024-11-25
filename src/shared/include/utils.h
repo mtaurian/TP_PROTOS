@@ -65,7 +65,8 @@ typedef enum errors {
     UNKNOWN_COMMAND,
     NOICE_AFTER_MESSAGE,
     MESSAGE_ALREADY_DELETED,
-    INTERNAL_ERROR
+    INTERNAL_ERROR,
+    CANNOT_ADD_USER
 } errors;
 
 typedef struct complete_error {

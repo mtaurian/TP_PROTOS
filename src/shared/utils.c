@@ -27,7 +27,8 @@ struct complete_error errors_list[] = {
     { .type = UNKNOWN_COMMAND,          .message = "Unknown command." },
     { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " },
     { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." },
-    { .type = INTERNAL_ERROR,           .message = "[MGMT] Internal server error." }
+    { .type = INTERNAL_ERROR,           .message = "[MGMT] Internal server error." },
+    { .type = CANNOT_ADD_USER,          .message = "[MGMT] Cannot add user." },
 
 };
 

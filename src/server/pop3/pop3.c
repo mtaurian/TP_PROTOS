@@ -166,7 +166,16 @@ void close_client(struct selector_key * _key) {
     free(data);
 }
 
-void user(char *s) {
+unsigned char validate_user_not_exists(char * username){
+    for(int i = 0; i < server->user_amount; i++) {
+        if(strcmp(server->users_list[i].name, username) == 0) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+
+unsigned char user(char *s) {
     user_data *user = &server->users_list[server->user_amount];
     char *p = strchr(s, ':');
     if(p == NULL) {
@@ -181,10 +190,16 @@ void user(char *s) {
         char * pass = malloc(sizeof(char)*(pass_length+1));
         strcpy(name, s);
         strcpy(pass, p);
-        user->pass = pass;
-        user->name = name;
-        user->logged = 0;
-        server->user_amount++;
+        if (validate_user_not_exists(name)) {
+            user->pass = pass;
+            user->name = name;
+            user->logged = 0;
+            server->user_amount++;
+            return TRUE;
+        }
+        free(name);
+        free(pass);
+        return FALSE;
     }
 }
 
@@ -336,17 +351,20 @@ unsigned char add_user(char * user_and_pass){
     if(server->user_amount >= MAX_USERS) {
         return FALSE;
     } else {
-        user(user_and_pass);
-        char * path = malloc(PATH_MAX);
-        snprintf(path, PATH_MAX, "%s/%s", server->maildir, server->users_list[server->user_amount-1].name);
-        mkdir(path, 0777);
-        snprintf(path, PATH_MAX, "%s/%s/cur", server->maildir, server->users_list[server->user_amount-1].name);
-        mkdir(path, 0777);
-        snprintf(path, PATH_MAX, "%s/%s/new", server->maildir, server->users_list[server->user_amount-1].name);
-        mkdir(path, 0777);
-        snprintf(path, PATH_MAX, "%s/%s/tmp", server->maildir, server->users_list[server->user_amount-1].name);
-        mkdir(path, 0777);
-        free(path);
-        return TRUE;
+        if(user(user_and_pass)) {
+            char *path = malloc(PATH_MAX);
+            snprintf(path, PATH_MAX, "%s/%s", server->maildir, server->users_list[server->user_amount - 1].name);
+            mkdir(path, 0777);
+            snprintf(path, PATH_MAX, "%s/%s/cur", server->maildir, server->users_list[server->user_amount - 1].name);
+            mkdir(path, 0777);
+            snprintf(path, PATH_MAX, "%s/%s/new", server->maildir, server->users_list[server->user_amount - 1].name);
+            mkdir(path, 0777);
+            snprintf(path, PATH_MAX, "%s/%s/tmp", server->maildir, server->users_list[server->user_amount - 1].name);
+            mkdir(path, 0777);
+            free(path);
+            return TRUE;
+        }
+        return FALSE;
     }
 }
+
