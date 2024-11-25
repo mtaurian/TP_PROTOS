@@ -4,6 +4,7 @@
 #include "states_definition/include/transaction.h"
 #include "states_definition/include/update.h"
 #include <dirent.h>
+#include <pthread.h>
 #include <sys/stat.h>
 
 static struct pop3_server * server;
@@ -50,6 +51,9 @@ void initialize_pop3_server() {
     server = malloc(sizeof(struct pop3_server));
     server->user_amount = 0;
     server->maildir = NULL;
+
+    pthread_mutex_init(&server->hc_mutex, NULL);
+    server->historic_connections = 0;
 }
 
 void free_pop3_server() {
@@ -59,6 +63,8 @@ void free_pop3_server() {
     if(server->maildir) {
         free(server->maildir);
     }
+
+    pthread_mutex_destroy(&server->hc_mutex);
     free(server);
 }
 
@@ -116,6 +122,10 @@ void pop3_passive_accept(const struct selector_key *_key) {
         err_msg = "Unable to register client socket handler";
     }
 
+    //manager metrics
+    pthread_mutex_lock(&server->hc_mutex);
+    server->historic_connections++;
+    pthread_mutex_unlock(&server->hc_mutex);
 
     finally:
     if(ss != SELECTOR_SUCCESS) {

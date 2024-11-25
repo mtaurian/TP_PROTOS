@@ -10,6 +10,7 @@
 #define MAX_ARGUMENTS 10
 #define COMMAND_AMOUNT 10
 
+#define ATTACHMENT(key) ((client_data*)(key)->data)
 
 typedef enum boolean {
     FALSE = 0,

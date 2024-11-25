@@ -18,7 +18,6 @@
 #include "../../../shared/include/buffer.h"
 #include "../../../shared/include/stm.h"
 
-#define ATTACHMENT(key) ((client_data*)(key)->data)
 #define BUFFER_SIZE 2048
 #define MAX_MAILS 100
 #define MAILDIR_PERMISSIONS 0777

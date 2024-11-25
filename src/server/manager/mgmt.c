@@ -9,9 +9,9 @@ static const struct state_definition states [] = {
         {
             .state            = NON_AUTHENTICATED,
             .on_arrival       = non_authenticated_on_arrival,
-            .on_departure     = NULL,
-            .on_read_ready    = NULL,
-            .on_write_ready   = NULL,
+            .on_departure     = non_authenticated_on_departure,
+            .on_read_ready    = non_authenticated_on_read_ready ,
+            .on_write_ready   = non_authenticated_on_write_ready,
         },
         {
             .state            = AUTHENTICATED,
