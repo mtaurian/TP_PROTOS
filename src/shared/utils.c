@@ -83,16 +83,16 @@ void write_std_response(char isOk, char *msg, struct selector_key *key) {
     size_t toWrite;
 
     if (isOk) {
-        buffer_write_string(&clientData->responseBuffer, "+OK ");
+        buffer_write_string(&clientData->responseBuffer, (uint8_t*)"+OK ");
     } else {
-        buffer_write_string(&clientData->responseBuffer, "-ERR ");
+        buffer_write_string(&clientData->responseBuffer, (uint8_t*)"-ERR ");
     }
 
     if(msg){
-        buffer_write_string(&clientData->responseBuffer, msg);
+        buffer_write_string(&clientData->responseBuffer, (uint8_t*)msg);
     }
 
-    buffer_write_string(&clientData->responseBuffer, "\n");
+    buffer_write_string(&clientData->responseBuffer, (uint8_t*)"\n");
 
 }
 

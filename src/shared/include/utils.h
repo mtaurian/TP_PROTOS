@@ -3,6 +3,7 @@
 
 #include <ctype.h>
 #include "../../server/pop3/include/pop3.h"
+#include "../../server/manager/include/mgmt.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -50,6 +51,7 @@ typedef struct client_data {
     char * username;
     char * password;
 
+    super_user_data * super_user;
     user_data * user;
     struct state_machine stm;
 
