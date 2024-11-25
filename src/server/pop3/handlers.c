@@ -153,7 +153,7 @@ void handle_retr(struct selector_key *key, char *mail_number) {
 						return;
 					}
 
-					strcat(response, "\n.");
+					strcat(response, "\r\n.");
 					write_std_response(OK, response, key);
 
 					close(mail->fd);

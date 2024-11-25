@@ -111,7 +111,7 @@ void write_std_response(char isOk, char *msg, struct selector_key *key) {
         buffer_write_string(&clientData->responseBuffer, (uint8_t*)msg);
     }
 
-    buffer_write_string(&clientData->responseBuffer, (uint8_t*)"\n");
+    buffer_write_string(&clientData->responseBuffer, (uint8_t*)"\r\n");
 
 }
 
