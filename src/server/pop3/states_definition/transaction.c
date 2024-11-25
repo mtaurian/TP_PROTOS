@@ -24,10 +24,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		handle_stat(key);
       		break;
     	case LIST:
-      		if(!handle_list(key, entry->arg)){
-                snprintf(message, MAX_RESPONSE_SIZE, "no such message, only %d %s in maildrop\r\n", ATTACHMENT(key)->user->mailbox->mail_count, ATTACHMENT(key)->user->mailbox->mail_count > 1 ? "messages" : "message");
-				write_std_response(0, message, key);
-      		}
+      		handle_list(key, entry->arg);
       		break;
     	case RETR:
       		if(!handle_retr(key, entry->arg)){ // error
