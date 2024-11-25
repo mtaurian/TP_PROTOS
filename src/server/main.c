@@ -246,7 +246,7 @@ finally:
 
     if(server_fd >= 0) {
         close(server_fd);
-        printf("Servidor cerrado.\n");
+        printf("[POP3] Server closed.\n");
     }
 
     if(mgmt_fd >= 0) {
