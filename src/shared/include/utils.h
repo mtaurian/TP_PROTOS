@@ -72,7 +72,7 @@ typedef struct complete_error {
 /*
     Parses user's request and returns a user_request or NULL if command not found
 */
-user_request * parse(struct selector_key * key);
+user_request parse(struct selector_key * key);
 
 void write_std_response(char isOk, char * msg, struct selector_key * key);
 
