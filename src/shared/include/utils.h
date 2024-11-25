@@ -74,6 +74,8 @@ typedef struct complete_error {
 typedef enum oks {
     AUTHENTICATION_SUCCESSFUL = 0,
     MARKED_TO_BE_DELETED,
+    LOGOUT_OUT_MESSAGES_DELETED,
+    LOGOUT_OUT,
     JUST_OK
 } oks;
 

@@ -11,12 +11,13 @@ int handle_user(struct selector_key *key, char * username){
     strcpy(clientData->username, username);
 
     printf("[POP3] Username set: %s\n", username);
-    return 1;
+    return OK;
 }
 
 void handle_quit(struct selector_key *key){
+    printf("in handle_quit PRE close_client\n");
     close_client(key);
-	write_std_response(1,"Goodbye", key);
+    printf("in handle_quit POST close_client\n");
 }
 
 int handle_pass(struct selector_key *key, char * password){
@@ -236,12 +237,24 @@ void handle_rset(struct selector_key *key){
 }
 
 void handle_update_quit(struct selector_key *key){
+    printf("in handle_update_quit\n");
 	client_data * clientData = ATTACHMENT(key);
     t_mailbox * mailbox = clientData->user->mailbox;
+
+    boolean has_message_been_deleted = FALSE;
 	for (int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++) {
 		if (mailbox->mails[i].deleted) {
+            has_message_been_deleted = TRUE;
+            printf("Deleting message %s\n", mailbox->mails[i].filename);
 			remove(mailbox->mails[i].filename);
 		}
 	}
+    if(has_message_been_deleted){
+        write_ok_message(key, LOGOUT_OUT_MESSAGES_DELETED);
+    } else {
+        write_ok_message(key, LOGOUT_OUT);
+    }
+    printf("Exiting handle_update_quit PRE handle_quit\n");
     handle_quit(key);
+    printf("Exiting handle_update_quit POST handle_quit\n");
 }
