@@ -27,8 +27,10 @@ struct complete_error errors_list[] = {
 };
 
 struct complete_ok oks_list[] = {
-    { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Authentication successful" },
+    { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Logged in." },
     { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted." },
+    { .type = LOGOUT_OUT,                    .message = "Logging out." },
+    { .type = LOGOUT_OUT_MESSAGES_DELETED,  .message = "Logging out, messages deleted." },
     { .type = JUST_OK,                      .message = NULL }
 };
 
@@ -38,7 +40,7 @@ struct complete_ok oks_list[] = {
 */
 commands findCommand(char *command) {
     for (int i = 0; i < COMMAND_AMOUNT; i++) {
-        if (strcmp(command, all_commands[i].string) == 0) {
+        if (strcmp(toLower(command), all_commands[i].string) == 0) {
             return all_commands[i].command;
         }
     }
