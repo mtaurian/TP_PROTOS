@@ -18,7 +18,8 @@ struct complete_error errors_list[] = {
     { .type = AUTHENTICATION_FAILED,    .message = "[AUTH] Authentication failed." },
     { .type = INVALID_MESSAGE_NUMBER,   .message = "There's no message " },
     { .type = UNKNOWN_COMMAND,          .message = "Unknown command." },
-    { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " }
+    { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " },
+    { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." }
 };
 
 
