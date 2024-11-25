@@ -23,6 +23,10 @@ struct complete_error errors_list[] = {
     { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." }
 };
 
+struct complete_ok oks_list[] = {
+    { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Authentication successful" },
+};
+
 
 /*
     Function to find a command in the list of allowed commands
@@ -174,4 +178,8 @@ void write_error_message_with_arg(struct selector_key * key, enum errors error, 
     strcpy(new_message, errors_list[error].message);
     strcat(new_message, extra);
     write_std_response(ERR, new_message, key);
+}
+
+void write_ok_message(struct selector_key * key, enum oks oks) {
+    write_std_response(OK, oks_list[oks].message, key);
 }

@@ -69,6 +69,16 @@ typedef struct complete_error {
 	char * message;
 } complete_error;
 
+typedef enum oks {
+    AUTHENTICATION_SUCCESSFUL = 0,
+    MARKED_TO_BE_DELETED,
+} oks;
+
+typedef struct complete_ok {
+    enum oks type;
+    char * message;
+} complete_ok;
+
 /*
     Parses user's request and returns a user_request or NULL if command not found
 */
@@ -95,5 +105,9 @@ void write_error_message(struct selector_key * key, enum errors error);
 */
 void write_error_message_with_arg(struct selector_key * key, enum errors error, char * extra);
 
+/*
+    Function that unifies the ok messages
+*/
+void write_ok_message(struct selector_key * key, enum oks oks);
 
 #endif //TP_PROTOS_UTILS_H
