@@ -52,6 +52,7 @@ struct pop3_server {
     user_data users_list[MAX_USERS];
     unsigned int user_amount;
     char* maildir;
+    char* transformation;
     size_t historic_connections; //volatile :/
     pthread_mutex_t  hc_mutex; // historic connections mutex
 };
@@ -74,6 +75,7 @@ unsigned int log_user(user_data *user);
 user_data * validate_user(char *username, char *password);
 void free_user_data(user_data *user);
 void set_maildir(const char *maildir);
+void set_transformation(const char *transformation);
 
 unsigned int load_mailbox(user_data *user);
 void free_mailbox(t_mailbox* mails);

@@ -26,9 +26,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		handle_list(key, entry.arg);
       		break;
     	case RETR:
-      		if(!handle_retr(key, entry.arg)){ // error
-				write_std_response(0,  "no such message\r\n",key);
-      		}
+      		handle_retr(key, entry.arg);
       		break;
     	case DELE:
       		handle_dele(key, entry.arg);

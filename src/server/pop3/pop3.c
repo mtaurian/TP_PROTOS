@@ -184,6 +184,11 @@ void set_maildir(const char *maildir) {
     printf("[POP3] MAILDIR: %s\n", server->maildir);
 }
 
+void set_transformation(const char *transformation) {
+    server->transformation = malloc(PATH_MAX);
+    strcpy(server->transformation, transformation);
+}
+
 unsigned int log_user(user_data *user) {
     if(user->logged) { // someone is already logged in
         return 0;
