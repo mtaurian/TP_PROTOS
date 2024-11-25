@@ -116,7 +116,7 @@ void handle_retr(struct selector_key *key, char *mail_number) {
 					if (mail->fd < 0) {
 						mail->fd = open(mail->filename, O_RDONLY | O_NONBLOCK);
 						if (mail->fd < 0) {
-							perror("Error opening mail file");//TODO logear en servidor que no se pudo abrir el archivo
+							printf("[POP3] Error opening mail file");
 							write_error_message(key, COULD_NOT_READ_MAIL_FILE);
 							return;
 						}
@@ -143,7 +143,7 @@ void handle_retr(struct selector_key *key, char *mail_number) {
 						if (errno == EAGAIN || errno == EWOULDBLOCK) {
 							//
 						} else {
-							perror("Error reading mail file"); // TODO error management
+							printf("[POP3] Error reading mail file");
 							write_error_message(key, COULD_NOT_READ_MAIL_FILE);
 						}
 						free(response);

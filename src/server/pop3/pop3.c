@@ -253,8 +253,8 @@ void log_out_user(user_data *user) {
 user_data *validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {
         if(strcmp(server->users_list[i]->name, username) == 0 && strcmp(server->users_list[i]->pass, password) == 0) {
-            printf("[POP3] Signed in user %s\n", username); // TODO: do as a log
-            return server->users_list[i]; // TODO: return 1 or 0
+            printf("[POP3] Signed in user %s\n", username);
+            return server->users_list[i];
         }
     }
     return NULL;
@@ -267,7 +267,8 @@ unsigned int load_mailbox(user_data *user) {
     DIR *dir = opendir(user_maildir);
     if (!dir) {
         free(user_maildir);
-        return 0; // no mails // TODO: error handling
+        printf("[POP3] No new mails.\n");
+        return 0;
     }
 
     user->mailbox->mails = malloc(MAX_MAILS * sizeof(mail));
@@ -338,7 +339,7 @@ size_t get_file_size(const char *filename) {
     if (stat(filename, &st) == 0) {
         return st.st_size;
     } else {
-        perror("Error getting file size\n");  //TODO: manejo de errores
+        perror("[POP3] Error getting file size\n");
         return 0;
     }
 }

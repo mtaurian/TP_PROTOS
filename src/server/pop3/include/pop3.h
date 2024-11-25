@@ -30,7 +30,7 @@ typedef struct mail {
     int fd;
     char *filename;
     size_t size;
-    int deleted; // TODO: change unsigned int
+    unsigned int deleted;
 } mail;
 
 typedef struct t_mailbox {
