@@ -9,31 +9,30 @@ void transaction_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int transaction_on_ready_to_read(struct selector_key *key){
-  	user_request * entry = parse(key);
+  	user_request entry = parse(key);
     char * message = malloc(MAX_RESPONSE_SIZE);
   	int ret = TRANSACTION;
-	if(entry->command == INVALID){
+	if(entry.command == INVALID){
         write_error_message(key, UNKNOWN_COMMAND);
-        free(entry);
         free(message);
 		return ret;
 	}
 
 
-  	switch (entry->command) {
+  	switch (entry.command) {
     	case STAT:
       		handle_stat(key);
       		break;
     	case LIST:
-      		handle_list(key, entry->arg);
+      		handle_list(key, entry.arg);
       		break;
     	case RETR:
-      		if(!handle_retr(key, entry->arg)){ // error
+      		if(!handle_retr(key, entry.arg)){ // error
 				write_std_response(0,  "no such message\r\n",key);
       		}
       		break;
     	case DELE:
-      		handle_dele(key, entry->arg);
+      		handle_dele(key, entry.arg);
       		break;
     	case NOOP:
       		write_std_response(OK, NULL, key);
@@ -52,7 +51,6 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
   	}
 
     free(message);
-  	free(entry);
 
   	return ret;
 }

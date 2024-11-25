@@ -41,8 +41,8 @@ commands findCommand(char *command) {
 }
 
 
-user_request * parse(struct selector_key * key) {
-    user_request * result = calloc(1,sizeof(user_request));
+user_request parse(struct selector_key * key) {
+    user_request result = (struct user_request){.arg = NULL, .is_valid = false, .command = INVALID};
     struct client_data * client_Data = ATTACHMENT(key);
     if(!buffer_can_read(&client_Data->clientBuffer)){
         return result;
@@ -57,20 +57,20 @@ user_request * parse(struct selector_key * key) {
         return result;
     }
 
-    result->command = findCommand(token);
+    result.command = findCommand(token);
 
-    if (result->command  == INVALID) {
+    if (result.command  == INVALID) {
         buffer_read_adv(&client_Data->clientBuffer, readable_bytes);
         return result;
     }
 
-    if (all_commands[result->command].has_params || result->command == LIST) {
-        result->is_valid = true;
+    if (all_commands[result.command].has_params || result.command == LIST) {
+        result.is_valid = true;
         if((token = strtok(NULL, "\r\n\0")) != NULL) {
-            strcpy(result->arg, token);
+            strcpy(result.arg, token);
         }
-        if (result->arg[0] =='\0' && result->command !=LIST ) {
-            result->is_valid = false;
+        if (result.arg[0] =='\0' && result.command !=LIST ) {
+            result.is_valid = false;
         }
     }
 
