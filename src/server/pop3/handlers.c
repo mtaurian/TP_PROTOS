@@ -38,8 +38,8 @@ int handle_stat(struct selector_key *key){
 
     char response[128];
     snprintf(response, sizeof(response), "%d %zd\r\n", clientData->user->mailbox->mail_count , clientData->user->mailbox->mails_size);
-    write_std_response(1,response, key);
-  	return 1;
+    write_std_response(OK,response, key);
+  	return OK;
 }
 
 void handle_list(struct selector_key *key, char * mail_number){
