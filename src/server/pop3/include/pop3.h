@@ -64,15 +64,15 @@ typedef enum pop3_states {
 void initialize_pop3_server();
 void free_pop3_server();
 
-void pop3_passive_accept(const struct selector_key *_key);
+void pop3_passive_accept(struct selector_key *_key);
 void close_client(struct selector_key *_key);
 
-void user(const char *s);
+void user(char *s);
 void log_out_user(user_data *user);
 unsigned int log_user(user_data *user);
 user_data * validate_user(char *username, char *password);
 void free_user_data(user_data *user);
-void set_maildir(const char *maildir);
+void set_maildir(char *maildir);
 
 unsigned int load_mailbox(user_data *user);
 void free_mailbox(t_mailbox* mails);

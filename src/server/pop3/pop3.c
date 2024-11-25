@@ -82,7 +82,7 @@ void free_user_data(user_data *user) {
     }
 }
 
-void pop3_passive_accept(const struct selector_key *_key) {
+void pop3_passive_accept(struct selector_key *_key) {
     const char *err_msg = NULL;
     struct sockaddr_storage client_addr;
     selector_status ss = SELECTOR_SUCCESS;
@@ -166,7 +166,7 @@ void close_client(struct selector_key * _key) {
     free(data);
 }
 
-void user(const char *s) {
+void user(char *s) {
     user_data *user = &server->users_list[server->user_amount];
     char *p = strchr(s, ':');
     if(p == NULL) {
@@ -188,7 +188,7 @@ void user(const char *s) {
     }
 }
 
-void set_maildir(const char *maildir) {
+void set_maildir(char *maildir) {
     server->maildir = malloc(PATH_MAX);
     strcpy(server->maildir, maildir);
     printf("MALDIR: %s\n", server->maildir);
