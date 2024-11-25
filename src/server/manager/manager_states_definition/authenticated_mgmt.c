@@ -26,7 +26,11 @@ unsigned int authenticated_on_read_ready(struct selector_key *key){
             handle_add_user(key, entry.arg);
             break;
         case DELETE_USER:
-
+            if (handle_delete_user(key, entry.arg)){
+                write_std_response(OK, "User deleted successfully", key);
+            } else {
+                write_error_message(key, CANNOT_DEL_USER);
+            }
             break;
         case METRICS:
 

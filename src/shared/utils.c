@@ -1,4 +1,5 @@
 #include "include/utils.h"
+#include "../server/pop3/include/pop3.h"
 
 struct command_struct all_commands[COMMAND_AMOUNT] = {
     { .string = "user", .command = USER, .has_params = TRUE },
@@ -29,6 +30,7 @@ struct complete_error errors_list[] = {
     { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." },
     { .type = INTERNAL_ERROR,           .message = "[MGMT] Internal server error." },
     { .type = CANNOT_ADD_USER,          .message = "[MGMT] Cannot add user." },
+    { .type = CANNOT_DEL_USER,          .message = "[MGMT] Cannot delete user." },
 
 };
 
@@ -118,6 +120,12 @@ char * toLower(char * str) {
 void read_handler(struct selector_key *_key) {
     const char *err_msg = NULL;
     client_data *clientData = ATTACHMENT(_key);
+
+    if (clientData != NULL && clientData->user != NULL && clientData->user->to_delete) {
+        close_client(_key);
+        delete_user(clientData->user->name);
+        return;
+    }
 
     size_t writable_bytes;
     uint8_t *write_ptr = buffer_write_ptr(&clientData->clientBuffer, &writable_bytes);

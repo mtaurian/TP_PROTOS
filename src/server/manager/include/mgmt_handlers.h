@@ -8,5 +8,6 @@
 boolean handle_login(struct selector_key *key, char *arg);
 boolean handle_users(struct selector_key *key);
 boolean handle_add_user(struct selector_key * key, char * arg);
+boolean handle_delete_user(struct selector_key * key, char * arg);
 
 #endif //TP_PROTOS_MGMT_HANDLERS_H

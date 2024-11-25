@@ -45,6 +45,7 @@ typedef struct user_data {
     char *pass;
     unsigned int logged;
     t_mailbox *mailbox;
+    unsigned char to_delete; // Flag to delete the user, when user is logged
 } user_data;
 
 struct pop3_server {
@@ -83,6 +84,7 @@ user_data ** get_users();
 size_t get_users_amount();
 unsigned char add_user(char * user_and_pass);
 unsigned char validate_user_not_exists(char * username);
+unsigned char delete_user(char * username);
 
 // could be in a utils file
 size_t get_file_size(const char *filename);

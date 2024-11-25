@@ -197,6 +197,7 @@ unsigned char user(char *s) {
             user->pass = pass;
             user->name = name;
             user->logged = 0;
+            user->to_delete = 0;
             server->user_amount++;
             return TRUE;
         }
@@ -369,5 +370,21 @@ unsigned char add_user(char * user_and_pass){
         }
         return FALSE;
     }
+}
+
+unsigned char delete_user(char * username){
+    for(int i = 0; i < server->user_amount; i++) {
+        if(strcmp(server->users_list[i]->name, username) == 0) {
+            if (server->users_list[i]->logged) {
+                server->users_list[i]->to_delete = TRUE;
+                return TRUE;
+            }
+            free_user_data(server->users_list[i]);
+            server->users_list[i] = server->users_list[server->user_amount - 1];
+            server->user_amount--;
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 

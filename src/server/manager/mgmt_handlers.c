@@ -46,3 +46,7 @@ boolean handle_add_user(struct selector_key * key, char * arg){
         return FALSE;
     }
 }
+
+boolean handle_delete_user(struct selector_key * key, char * arg){
+    return delete_user(arg);
+}
