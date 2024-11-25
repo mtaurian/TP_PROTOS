@@ -13,10 +13,18 @@ struct command_struct all_commands[COMMAND_AMOUNT] = {
     { .string = ""     ,.command = INVALID, .has_params = FALSE}
 };
 
+struct complete_error errors_list[] = {
+    { .type = NO_USERNAME_GIVEN,        .message = "No username given." },
+    { .type = AUTHENTICATION_FAILED,    .message = "[AUTH] Authentication failed." },
+    { .type = INVALID_MESSAGE_NUMBER,   .message = "There's no message " },
+    { .type = UNKNOWN_COMMAND,          .message = "Unknown command." },
+    { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " }
+};
 
 
-
-// Función para buscar un comando en la lista de comandos permitidos
+/*
+    Function to find a command in the list of allowed commands
+*/
 commands findCommand(char *command) {
     for (int i = 0; i < COMMAND_AMOUNT; i++) {
         if (strcmp(command, all_commands[i].string) == 0) {
@@ -76,9 +84,10 @@ void write_std_response(char isOk, char *msg, struct selector_key *key) {
 
     if(msg){
         buffer_write_string(&clientData->responseBuffer, msg);
-    } else {
-    	buffer_write_string(&clientData->responseBuffer, "\n");
     }
+    
+    buffer_write_string(&clientData->responseBuffer, "\n");
+    
 }
 
 char * toLower(char * str) {
@@ -153,3 +162,13 @@ void write_handler(struct selector_key *_key) {
     }
 }
 
+void write_error_message(struct selector_key * key, enum errors error) {
+    write_std_response(ERR, errors_list[error].message, key);
+}
+
+void write_error_message_with_arg(struct selector_key * key, enum errors error, char * extra) {
+    char new_message[MAX_MESSAGE_LEN];
+    strcpy(new_message, errors_list[error].message);
+    strcat(new_message, extra);
+    write_std_response(ERR, new_message, key);
+}

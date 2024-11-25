@@ -9,6 +9,9 @@
 #define MAX_COMMAND_LENGTH 50
 #define MAX_ARGUMENTS 10
 #define COMMAND_AMOUNT 10
+#define MAX_MESSAGE_LEN 128
+#define OK 1
+#define ERR 0
 
 
 typedef enum boolean {
@@ -51,6 +54,19 @@ typedef struct client_data {
 
 } client_data;
 
+typedef enum errors {
+    NO_USERNAME_GIVEN = 0,
+    AUTHENTICATION_FAILED,
+    INVALID_MESSAGE_NUMBER,
+    UNKNOWN_COMMAND,
+    NOICE_AFTER_MESSAGE
+} errors;
+
+typedef struct complete_error {
+	enum errors type;
+	char * message;
+} complete_error;
+
 /*
     Parses user's request and returns a user_request or NULL if command not found
 */
@@ -66,6 +82,16 @@ void write_handler(struct selector_key *_key);
     Converts a string to lower case
 */
 char * toLower(char * str);
+
+/*
+    Function that unifies the error messages
+*/
+void write_error_message(struct selector_key * key, enum errors error);
+
+/*
+    Function that unifies the error messages with an extra argument
+*/
+void write_error_message_with_arg(struct selector_key * key, enum errors error, char * extra);
 
 
 #endif //TP_PROTOS_UTILS_H
