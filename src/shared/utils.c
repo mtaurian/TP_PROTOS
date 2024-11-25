@@ -25,7 +25,8 @@ struct complete_error errors_list[] = {
 
 struct complete_ok oks_list[] = {
     { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Authentication successful" },
-    { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted." }
+    { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted." },
+    { .type = JUST_OK,                      .message = NULL }
 };
 
 
