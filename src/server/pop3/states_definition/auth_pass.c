@@ -10,7 +10,6 @@ void auth_pass_on_departure(unsigned state, struct selector_key *key){
 
 unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
     user_request * entry = parse(key);
-    char * message = NULL;
     int ret = AUTHORIZATION_PASSWORD;
 
     if(entry->command == INVALID){
@@ -23,8 +22,7 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
         case PASS:
             if(handle_pass(key, entry->arg)){
                 ret = TRANSACTION;
-                message =  "Authentication successful";
-                write_std_response(OK, message, key);
+                write_ok_message(key, AUTHENTICATION_SUCCESSFUL);
             } else { // passwords don't match
                 write_error_message(key, AUTHENTICATION_FAILED);
                 ret = AUTHORIZATION_USER;
