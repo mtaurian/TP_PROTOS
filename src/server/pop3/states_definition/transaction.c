@@ -9,39 +9,33 @@ void transaction_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int transaction_on_ready_to_read(struct selector_key *key){
-  	user_request * entry = parse(key);
+  	user_request entry = parse(key);
     char * message = malloc(MAX_RESPONSE_SIZE);
   	int ret = TRANSACTION;
-	if(entry == NULL || entry->command == INVALID){
-		message =  "Unknown command.\n";
-		write_std_response(0, message, key);
+	if(entry.command == INVALID){
+        write_error_message(key, UNKNOWN_COMMAND);
+        free(message);
 		return ret;
 	}
 
 
-  	switch (entry->command) {
+  	switch (entry.command) {
     	case STAT:
       		handle_stat(key);
       		break;
     	case LIST:
-      		if(!handle_list(key, entry->arg)){
-                snprintf(message, MAX_RESPONSE_SIZE, "no such message, only %d %s in maildrop\r\n", ATTACHMENT(key)->user->mailbox->mail_count, ATTACHMENT(key)->user->mailbox->mail_count > 1 ? "messages" : "message");
-				write_std_response(0, message, key);
-      		}
+      		handle_list(key, entry.arg);
       		break;
     	case RETR:
-      		if(!handle_retr(key, entry->arg)){ // error
+      		if(!handle_retr(key, entry.arg)){ // error
 				write_std_response(0,  "no such message\r\n",key);
       		}
       		break;
     	case DELE:
-      		if(!handle_dele(key, entry->arg)){
-                snprintf(message, MAX_RESPONSE_SIZE, "message %d already deleted\r\n", atoi(entry->arg)); // TODO: validacion con negativos
-				write_std_response(0, message, key);
-      		}
+      		handle_dele(key, entry.arg);
       		break;
     	case NOOP:
-      		write_std_response(1, NULL, key);
+      		write_std_response(OK, NULL, key);
       		break;
     	case RSET:
       		int rset_amount = handle_rset(key);
@@ -52,12 +46,11 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
             ret = UPDATE;
       		break;
     	default:
-      		write_std_response(0, NULL, key);
+      		write_error_message(key, UNKNOWN_COMMAND);
       		break;
   	}
 
     free(message);
-  	free(entry);
 
   	return ret;
 }

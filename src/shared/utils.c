@@ -22,10 +22,17 @@ struct command_struct all_commands[COMMAND_AMOUNT] = {
 struct complete_error errors_list[] = {
     { .type = NO_USERNAME_GIVEN,        .message = "No username given." },
     { .type = AUTHENTICATION_FAILED,    .message = "[AUTH] Authentication failed." },
-    { .type = INVALID_MESSAGE_NUMBER,   .message = "There's no message " },
+    { .type = INVALID_MESSAGE_NUMBER,   .message = "Invalid message number: " },
+    { .type = NO_MESSAGE,               .message = "There's no message " },
     { .type = UNKNOWN_COMMAND,          .message = "Unknown command." },
     { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " },
+    { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." },
     { .type = INTERNAL_ERROR,           .message = "[MGMT] Internal server error." }
+
+};
+
+struct complete_ok oks_list[] = {
+    { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Authentication successful" },
 };
 
 
@@ -42,8 +49,8 @@ commands findCommand(char *command) {
 }
 
 
-user_request * parse(struct selector_key * key) {
-    user_request * result = calloc(1,sizeof(user_request));
+user_request parse(struct selector_key * key) {
+    user_request result = (struct user_request){.arg = NULL, .is_valid = false, .command = INVALID};
     struct client_data * client_Data = ATTACHMENT(key);
     if(!buffer_can_read(&client_Data->clientBuffer)){
         return result;
@@ -58,24 +65,25 @@ user_request * parse(struct selector_key * key) {
         return result;
     }
 
-    result->command = findCommand(token);
+    result.command = findCommand(token);
 
-    if (result->command  == INVALID) {
+    if (result.command  == INVALID) {
         buffer_read_adv(&client_Data->clientBuffer, readable_bytes);
         return result;
     }
 
-    if (all_commands[result->command].has_params || result->command == LIST) {
-        result->is_valid = true;
-        if((token = strtok(NULL, "\r\n")) != NULL) {
-            strcpy(result->arg, token);
+    if (all_commands[result.command].has_params || result.command == LIST) {
+        result.is_valid = true;
+        if((token = strtok(NULL, "\r\n\0")) != NULL) {
+            strcpy(result.arg, token);
         }
-        if (result->arg[0] =='\0' && result->command !=LIST ) {
-            result->is_valid = false;
+        if (result.arg[0] =='\0' && result.command !=LIST ) {
+            result.is_valid = false;
         }
     }
 
     buffer_read_adv(&client_Data->clientBuffer, readable_bytes);
+    buffer_clean(read_ptr,readable_bytes);
     return result;
 }
 
@@ -178,4 +186,8 @@ void write_error_message_with_arg(struct selector_key * key, enum errors error, 
     strcpy(new_message, errors_list[error].message);
     strcat(new_message, extra);
     write_std_response(ERR, new_message, key);
+}
+
+void write_ok_message(struct selector_key * key, enum oks oks) {
+    write_std_response(OK, oks_list[oks].message, key);
 }

@@ -61,8 +61,10 @@ typedef enum errors {
     NO_USERNAME_GIVEN = 0,
     AUTHENTICATION_FAILED,
     INVALID_MESSAGE_NUMBER,
+    NO_MESSAGE,
     UNKNOWN_COMMAND,
     NOICE_AFTER_MESSAGE,
+    MESSAGE_ALREADY_DELETED,
     INTERNAL_ERROR
 } errors;
 
@@ -71,10 +73,20 @@ typedef struct complete_error {
 	char * message;
 } complete_error;
 
+typedef enum oks {
+    AUTHENTICATION_SUCCESSFUL = 0,
+    MARKED_TO_BE_DELETED,
+} oks;
+
+typedef struct complete_ok {
+    enum oks type;
+    char * message;
+} complete_ok;
+
 /*
     Parses user's request and returns a user_request or NULL if command not found
 */
-user_request * parse(struct selector_key * key);
+user_request parse(struct selector_key * key);
 
 void write_std_response(char isOk, char * msg, struct selector_key * key);
 
@@ -97,5 +109,9 @@ void write_error_message(struct selector_key * key, enum errors error);
 */
 void write_error_message_with_arg(struct selector_key * key, enum errors error, char * extra);
 
+/*
+    Function that unifies the ok messages
+*/
+void write_ok_message(struct selector_key * key, enum oks oks);
 
 #endif //TP_PROTOS_UTILS_H
