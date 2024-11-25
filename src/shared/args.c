@@ -6,6 +6,8 @@
 #include <getopt.h>
 
 #include "include/args.h"
+
+#include "../server/manager/include/mgmt.h"
 #include "../server/pop3/include/pop3.h"
 
 
@@ -53,7 +55,8 @@ usage(const char *progname) {
         "   -L <conf  addr>  Dirección donde servirá el servicio de management.\n"
         "   -p <POP3 port>   Puerto entrante conexiones POP3.\n"
         "   -P <conf port>   Puerto entrante conexiones configuracion\n"
-        "   -u <name>:<pass> Usuario y contraseña de usuario que puede usar el servidor. Hasta 10.\n"
+        "   -u <name>:<pass> Usuario y contraseña de usuario que puede usar el servidor.\n"
+        "   -U <name>:<pass> Usuario y contraseña de usuario admin que puede usar el servicio de management.\n"
         "   -v               Imprime información sobre la versión versión y termina.\n"
         "   -d <path>        Carpeta donde residen los Maildirs.\n"
         "   -t <cmd>         Comando para aplicar transformaciones"
@@ -74,6 +77,7 @@ void parse_args(const int argc, char **argv, struct pop3args *args) {
 
     int c;
     int nusers = 0;
+    int nadmins = 0;
 
     while (true) {
         int option_index = 0;
@@ -81,7 +85,7 @@ void parse_args(const int argc, char **argv, struct pop3args *args) {
             { 0,           0,                 0, 0 }
         };
 
-        c = getopt_long(argc, argv, "hl:L:p:P:u:vd:t:", long_options, &option_index);
+        c = getopt_long(argc, argv, "hl:L:p:P:u:vd:t:U:", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -119,6 +123,15 @@ void parse_args(const int argc, char **argv, struct pop3args *args) {
                 break;
             case 't':
                 //TODO implementar
+                break;
+            case 'U':
+                if(nadmins >= MAX_MGMT_USERS) {
+                    fprintf(stderr, "maximun number of command line users reached: %d.\n", MAX_USERS);
+                    exit(1);
+                } else {
+                    mgmt_user(optarg);
+                    nadmins++;
+                }
                 break;
             default:
                 fprintf(stderr, "unknown argument %d.\n", c);

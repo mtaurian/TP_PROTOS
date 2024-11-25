@@ -81,6 +81,7 @@ static int setupSockAddr(char* addr, unsigned short port, void* res, socklen_t* 
 
 int main(const int argc,char **argv) {
     initialize_pop3_server();
+    initialize_mgmt_server();
     struct pop3args *pop3config = malloc(sizeof(struct pop3args));
 
     parse_args(argc,argv,pop3config);
@@ -255,6 +256,7 @@ finally:
 
     free(pop3config);
     free_pop3_server();
+    free_mgmt_server();
 
     return ret;
 

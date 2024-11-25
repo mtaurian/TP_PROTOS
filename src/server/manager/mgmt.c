@@ -3,6 +3,8 @@
 #include "../../shared/include/utils.h"
 #include "manager_states_definition/include/non_authenticated_mgmt.h"
 
+static struct mgmt_server * mgmt_server;
+
 static const struct state_definition states [] = {
         {
             .state            = NON_AUTHENTICATED,
@@ -27,6 +29,20 @@ static const struct fd_handler client_handler = {
         .handle_block = NULL,
 };
 
+
+void initialize_mgmt_server() {
+    mgmt_server = malloc(sizeof(struct mgmt_server));
+    mgmt_server->admin_amount = 0;
+}
+
+void free_mgmt_server() {
+    for (int i = 0; i < mgmt_server->admin_amount; i++) {
+        const super_user_data *user = &mgmt_server->users_list[i];
+        free(user->name);
+        free(user->pass);
+    }
+    free(mgmt_server);
+}
 
 void mgmt_passive_accept(struct selector_key *_key) {
     const char * err_msg = NULL;
@@ -103,4 +119,29 @@ void close_mgmt_client(struct selector_key * _key) {
     free(data->password);
     free(data->username);
     free(data);
+}
+
+
+void mgmt_user(const char *s) {
+    super_user_data *user = &mgmt_server->users_list[mgmt_server->admin_amount];
+    char *p = strchr(s, ':');
+    if(p == NULL) {
+        fprintf(stderr, "password not found\n");
+        exit(1);
+    } else {
+        *p = 0;
+        p++;
+        size_t name_length = strlen(s);
+        size_t pass_length = strlen(p);
+        char * name = malloc(sizeof(char)*(name_length+1));
+        char * pass = malloc(sizeof(char)*(pass_length+1));
+        strcpy(name, s);
+        strcpy(pass, p);
+        user->pass = pass;
+        user->name = name;
+        user->logged = 0;
+        mgmt_server->admin_amount++;
+
+        printf("User %s:%s added\n", name, pass);
+    }
 }

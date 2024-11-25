@@ -21,7 +21,7 @@ typedef struct super_user_data {
 
 struct mgmt_server {
     super_user_data users_list[MAX_MGMT_USERS];
-    unsigned int user_amount;
+    unsigned int admin_amount;
 };
 
 
@@ -30,10 +30,14 @@ enum mgmt_states {
     AUTHENTICATED
 };
 
+void initialize_mgmt_server();
+void free_mgmt_server();
 
 
 void mgmt_passive_accept(struct selector_key *_key);
 void close_mgmt_client(struct selector_key * _key);
+
+void mgmt_user(const char *s);
 
 
 #endif //TP_PROTOS_MGMT_H
