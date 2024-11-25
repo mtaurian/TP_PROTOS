@@ -14,6 +14,8 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
   	int ret = TRANSACTION;
 	if(entry->command == INVALID){
         write_error_message(key, UNKNOWN_COMMAND);
+        free(entry);
+        free(message);
 		return ret;
 	}
 

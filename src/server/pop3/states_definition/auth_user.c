@@ -13,7 +13,6 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
     client_data *clientData = ATTACHMENT(key);
     user_request * entry = parse(key);
 
-    char * message = NULL;
     int ret = AUTHORIZATION_USER;
 
     if(entry->command == INVALID){
