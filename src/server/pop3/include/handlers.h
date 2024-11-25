@@ -16,7 +16,7 @@ int handle_stat(struct selector_key *key);
 int handle_list(struct selector_key *key, char * mail_number);
 int handle_retr(struct selector_key *key, char * mail_number);
 void handle_dele(struct selector_key *key, char * mail_number);
-int handle_rset(struct selector_key *key);
+void handle_rset(struct selector_key *key);
 
 void handle_update_quit(struct selector_key *key);
 #endif //TP_PROTOS_HANDLERS_H

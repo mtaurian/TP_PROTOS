@@ -191,19 +191,21 @@ void handle_dele(struct selector_key *key, char * mail_number){
   	return;
 }
 
-int handle_rset(struct selector_key *key){
+void handle_rset(struct selector_key *key){
   	client_data * clientData = ATTACHMENT(key);
+	t_mailbox * mailbox = clientData->user->mailbox;
+
     int rset_amount = 0;
-    for(int i = 0; i < (clientData->user->mailbox->mail_count + clientData->user->mailbox->deleted_count); i++){
-		if(clientData->user->mailbox->mails[i].deleted){
-      		clientData->user->mailbox->mails[i].deleted = 0;
-            clientData->user->mailbox->mails_size += clientData->user->mailbox->mails[i].size;
-            clientData->user->mailbox->mail_count++;
-            clientData->user->mailbox->deleted_count--;
-            rset_amount++;
+    for(int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++){
+		if(mailbox->mails[i].deleted){
+      		mailbox->mails[i].deleted = FALSE;
+            mailbox->mails_size += clientData->user->mailbox->mails[i].size;
+            mailbox->mail_count++;
+            mailbox->deleted_count--;
         }
 	}
-    return rset_amount;
+    write_ok_message(key, JUST_OK);
+    return;
 }
 
 void handle_update_quit(struct selector_key *key){
