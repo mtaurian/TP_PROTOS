@@ -30,7 +30,7 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
         case QUIT:
             printf("Quitting, but from pass\n");
             write_ok_message(key, LOGOUT_OUT);
-            //handle_quit(key);
+            handle_quit(key);
         	break;
         default:
             write_error_message(key, UNKNOWN_COMMAND);

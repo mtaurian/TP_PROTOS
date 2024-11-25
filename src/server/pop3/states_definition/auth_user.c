@@ -32,7 +32,7 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
         case QUIT:
             write_ok_message(key, LOGOUT_OUT);
             printf("Quitting\n");
-            //handle_quit(key);
+            handle_quit(key);
             break;
         case PASS:
             write_error_message(key, NO_USERNAME_GIVEN);
