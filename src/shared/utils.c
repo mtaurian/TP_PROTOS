@@ -62,7 +62,7 @@ user_request * parse(struct selector_key * key) {
 
     if (all_commands[result->command].has_params || result->command == LIST) {
         result->is_valid = true;
-        if((token = strtok(NULL, "\r\n")) != NULL) {
+        if((token = strtok(NULL, "\r\n\0")) != NULL) {
             strcpy(result->arg, token);
         }
         if (result->arg[0] =='\0' && result->command !=LIST ) {
@@ -71,6 +71,7 @@ user_request * parse(struct selector_key * key) {
     }
 
     buffer_read_adv(&client_Data->clientBuffer, readable_bytes);
+    buffer_clean(read_ptr,readable_bytes);
     return result;
 }
 
