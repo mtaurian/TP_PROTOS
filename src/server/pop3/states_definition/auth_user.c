@@ -17,8 +17,7 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
     int ret = AUTHORIZATION_USER;
 
     if(entry->command == INVALID){
-        message =  "Unknown command.\n";
-        write_std_response(0, message, key);
+        write_error_message(key, UNKNOWN_COMMAND);
         free(entry);
         return ret;
     }
@@ -29,8 +28,7 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
                 ret = AUTHORIZATION_PASSWORD;
                 write_std_response(1,NULL, key);
             } else { // not a valid user
-                message =  "Authentication failed\n";
-                write_std_response(0,message, key);
+                write_error_message(key, AUTHENTICATION_FAILED);
             }
             break;
         case QUIT:
@@ -38,11 +36,10 @@ unsigned int auth_user_on_ready_to_read(struct selector_key *key){
             handle_quit(key);
             break;
         case PASS:
-            message =  "No username given.\n";
-            write_std_response(0,message, key);
+            write_error_message(key, NO_USERNAME_GIVEN);
+            break;
         default:
-            message =  "Authentication needed to run command.\n";
-            write_std_response(0, NULL, key);
+            write_error_message(key, UNKNOWN_COMMAND);
             break;
     }
 
