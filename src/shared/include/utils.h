@@ -61,7 +61,9 @@ typedef enum errors {
     NO_MESSAGE,
     UNKNOWN_COMMAND,
     NOICE_AFTER_MESSAGE,
-    MESSAGE_ALREADY_DELETED
+    MESSAGE_ALREADY_DELETED,
+    COULD_NOT_READ_MAIL_FILE,
+    JUST_ERR,
 } errors;
 
 typedef struct complete_error {

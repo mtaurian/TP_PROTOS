@@ -20,7 +20,10 @@ struct complete_error errors_list[] = {
     { .type = NO_MESSAGE,               .message = "There's no message " },
     { .type = UNKNOWN_COMMAND,          .message = "Unknown command." },
     { .type = NOICE_AFTER_MESSAGE,      .message = "Noise after message number: " },
-    { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." }
+    { .type = MESSAGE_ALREADY_DELETED,  .message = "Message is deleted." },
+    { .type = COULD_NOT_READ_MAIL_FILE,  .message = "Could not read mail file." },
+    { .type = JUST_ERR,                 .message = NULL }
+
 };
 
 struct complete_ok oks_list[] = {

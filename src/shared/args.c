@@ -122,7 +122,7 @@ void parse_args(const int argc, char **argv, struct pop3args *args) {
                 set_maildir(optarg);
                 break;
             case 't':
-                //TODO implementar
+                set_transformation(optarg);
                 break;
             case 'U':
                 if(nadmins >= MAX_MGMT_USERS) {

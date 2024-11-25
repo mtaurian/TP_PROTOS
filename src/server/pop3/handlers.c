@@ -77,7 +77,7 @@ void handle_list(struct selector_key *key, char * mail_number){
 	    }
     }
 
-    
+
 
     snprintf(response, MAX_RESPONSE_SIZE, "%d messages (%zu octets)\r\n", mailbox->mail_count, mailbox->mails_size);
 
@@ -95,69 +95,84 @@ void handle_list(struct selector_key *key, char * mail_number){
 	return;
 }
 
-int handle_retr(struct selector_key *key, char *mail_number) {
+void handle_retr(struct selector_key *key, char *mail_number) {
 	client_data *clientData = ATTACHMENT(key);
 
 	t_mailbox *mailbox = clientData->user->mailbox;
+	long mail_id;
+	char *endptr;
+	if (*mail_number != '\0') {
+		mail_id = strtol(mail_number, &endptr, 10);
+		if (*endptr != '\0') {
+			write_error_message_with_arg(key, NOICE_AFTER_MESSAGE, endptr);
+			endptr = NULL;
+			return;
+		}
+		if (mail_id > 0) {
+			if (mail_id <= mailbox->mail_count) {
+				if (!mailbox->mails[mail_id - 1].deleted) {
+					mail *mail = &mailbox->mails[mail_id - 1];
+					if (mail->fd < 0) {
+						mail->fd = open(mail->filename, O_RDONLY | O_NONBLOCK);
+						if (mail->fd < 0) {
+							perror("Error opening mail file");//TODO logear en servidor que no se pudo abrir el archivo
+							write_error_message(key, COULD_NOT_READ_MAIL_FILE);
+							return;
+						}
+					}
 
-	int mail_id = atoi(mail_number); // TODO: atoi breaks when float
+					char *buffer = malloc(BUFFER_SIZE);
+					char *response = malloc(BUFFER_SIZE);
+					size_t response_len = 0;
 
-	if (mail_id <= 0 || mail_id > mailbox->mail_count || mailbox->mails[mail_id - 1].deleted) {
-		return 0; // TODO eror management
-	}
+					strcpy(response, "message follows\r\n");
+					response_len = strlen(response);
 
-	mail *mail = &mailbox->mails[mail_id - 1];
+					ssize_t bytes_read;
+					while ((bytes_read = read(mail->fd, buffer, BUFFER_SIZE)) > 0) {
+						buffer[bytes_read] = '\0';
+						if (response_len + bytes_read + 1 > BUFFER_SIZE) {
+							response = realloc(response, response_len + bytes_read + 1);
+						}
+						strncat(response, buffer, bytes_read);
+						response_len += bytes_read;
+					}
 
-	if (mail->fd < 0) {
-		mail->fd = open(mail->filename, O_RDONLY | O_NONBLOCK);
-		if (mail->fd < 0) {
-			perror("Error opening mail file");
-			return 0;
+					if (bytes_read < 0) {
+						if (errno == EAGAIN || errno == EWOULDBLOCK) {
+							//
+						} else {
+							perror("Error reading mail file"); // TODO error management
+							write_error_message(key, COULD_NOT_READ_MAIL_FILE);
+						}
+						free(response);
+						free(buffer);
+						mail->fd = -1;
+						close(mail->fd);
+						return;
+					}
+
+					strcat(response, "\n.");
+					write_std_response(OK, response, key);
+
+					close(mail->fd);
+					mail->fd = -1;
+
+					free(response);
+					free(buffer);
+
+					return;
+				} else {
+					write_error_message(key, MESSAGE_ALREADY_DELETED);
+					return;
+				}
+			} else {
+				write_error_message_with_arg(key, NO_MESSAGE, mail_number);
+				return ;
+			}
 		}
 	}
-
-	char * buffer = malloc(BUFFER_SIZE);
-    char * response = malloc(BUFFER_SIZE);
-	size_t response_len = 0;
-
-	strcpy(response, "message follows\r\n");
-	response_len = strlen(response);
-
-	ssize_t bytes_read;
-	while ((bytes_read = read(mail->fd, buffer, BUFFER_SIZE)) > 0) {
-		buffer[bytes_read] = '\0';
-		if (response_len + bytes_read + 1 > BUFFER_SIZE) {
-			response = realloc(response, response_len + bytes_read + 1);
-		}
-		strncat(response, buffer, bytes_read);
-		response_len += bytes_read;
-	}
-
-	if (bytes_read < 0) {
-		if (errno == EAGAIN || errno == EWOULDBLOCK) {
-             //
-		} else {
-			perror("Error reading mail file"); // TODO error management
-			write_std_response(0, "-ERR Could not read mail file\r\n", key);
-		}
-        free(response);
-		free(buffer);
-        mail->fd = -1;
-    	close(mail->fd);
-		return 0;
-
-	}
-
-	strcat(response, "\n.\r\n");
-	write_std_response(1, response, key);
-
-	close(mail->fd);
-	mail->fd = -1;
-
-	free(response);
-	free(buffer);
-
-	return 1;
+	write_error_message_with_arg(key, INVALID_MESSAGE_NUMBER, mail_number);
 }
 
 
