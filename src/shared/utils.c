@@ -44,7 +44,7 @@ commands findCommand(char *command) {
 
 
 user_request parse(struct selector_key * key) {
-    user_request result = (struct user_request){.arg = NULL, .is_valid = false, .command = INVALID};
+    user_request result = (struct user_request){ .is_valid = false, .command = INVALID};
     struct client_data * client_Data = ATTACHMENT(key);
     if(!buffer_can_read(&client_Data->clientBuffer)){
         return result;
