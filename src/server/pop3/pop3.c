@@ -58,8 +58,9 @@ void initialize_pop3_server() {
 
 void free_pop3_server() {
     for (int i = 0; i < server->user_amount; i++) {
-        free_user_data(&server->users_list[i]);
+        free_user_data(server->users_list[i]);
     }
+
     if(server->maildir) {
         free(server->maildir);
     }
@@ -80,6 +81,7 @@ void free_user_data(user_data *user) {
         free_mailbox(user->mailbox);
         user->mailbox = NULL;
     }
+    free(user);
 }
 
 void pop3_passive_accept(struct selector_key *_key) {
@@ -168,7 +170,7 @@ void close_client(struct selector_key * _key) {
 
 unsigned char validate_user_not_exists(char * username){
     for(int i = 0; i < server->user_amount; i++) {
-        if(strcmp(server->users_list[i].name, username) == 0) {
+        if(strcmp(server->users_list[i]->name, username) == 0) {
             return FALSE;
         }
     }
@@ -176,7 +178,6 @@ unsigned char validate_user_not_exists(char * username){
 }
 
 unsigned char user(char *s) {
-    user_data *user = &server->users_list[server->user_amount];
     char *p = strchr(s, ':');
     if(p == NULL) {
         fprintf(stderr, "password not found\n");
@@ -191,6 +192,8 @@ unsigned char user(char *s) {
         strcpy(name, s);
         strcpy(pass, p);
         if (validate_user_not_exists(name)) {
+            server->users_list[server->user_amount] = malloc(sizeof(user_data));
+            user_data * user = server->users_list[server->user_amount];
             user->pass = pass;
             user->name = name;
             user->logged = 0;
@@ -234,9 +237,9 @@ void log_out_user(user_data *user) {
 
 user_data *validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {
-        if(strcmp(server->users_list[i].name, username) == 0 && strcmp(server->users_list[i].pass, password) == 0) {
+        if(strcmp(server->users_list[i]->name, username) == 0 && strcmp(server->users_list[i]->pass, password) == 0) {
             printf("[POP3] Signed in user %s\n", username); // TODO: do as a log
-            return &server->users_list[i]; // TODO: return 1 or 0
+            return server->users_list[i]; // TODO: return 1 or 0
         }
     }
     return NULL;
@@ -339,7 +342,7 @@ void free_mailbox(t_mailbox* mails) {
     }
 }
 
-user_data * get_users(){
+user_data ** get_users(){
     return server->users_list;
 }
 
@@ -353,13 +356,13 @@ unsigned char add_user(char * user_and_pass){
     } else {
         if(user(user_and_pass)) {
             char *path = malloc(PATH_MAX);
-            snprintf(path, PATH_MAX, "%s/%s", server->maildir, server->users_list[server->user_amount - 1].name);
+            snprintf(path, PATH_MAX, "%s/%s", server->maildir, server->users_list[server->user_amount - 1]->name);
             mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/cur", server->maildir, server->users_list[server->user_amount - 1].name);
+            snprintf(path, PATH_MAX, "%s/%s/cur", server->maildir, server->users_list[server->user_amount - 1]->name);
             mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/new", server->maildir, server->users_list[server->user_amount - 1].name);
+            snprintf(path, PATH_MAX, "%s/%s/new", server->maildir, server->users_list[server->user_amount - 1]->name);
             mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/tmp", server->maildir, server->users_list[server->user_amount - 1].name);
+            snprintf(path, PATH_MAX, "%s/%s/tmp", server->maildir, server->users_list[server->user_amount - 1]->name);
             mkdir(path, 0777);
             free(path);
             return TRUE;

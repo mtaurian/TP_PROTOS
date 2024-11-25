@@ -48,7 +48,7 @@ typedef struct user_data {
 } user_data;
 
 struct pop3_server {
-    user_data users_list[MAX_USERS];
+    user_data * users_list[MAX_USERS];
     unsigned int user_amount;
     char* maildir;
     size_t historic_connections; //volatile :/
@@ -70,7 +70,7 @@ void close_client(struct selector_key *_key);
 unsigned char user(char *s);
 void log_out_user(user_data *user);
 unsigned int log_user(user_data *user);
-user_data * validate_user(char *username, char *password);
+user_data *validate_user(char *username, char *password);
 void free_user_data(user_data *user);
 void set_maildir(char *maildir);
 unsigned int load_mailbox(user_data *user);
@@ -79,7 +79,7 @@ void free_mailbox(t_mailbox* mails);
 
 // for management server
 size_t get_historic_connections();
-user_data * get_users();
+user_data ** get_users();
 size_t get_users_amount();
 unsigned char add_user(char * user_and_pass);
 unsigned char validate_user_not_exists(char * username);

@@ -14,7 +14,7 @@ boolean handle_login(struct selector_key *key, char *arg){
 
 boolean handle_users(struct selector_key *key) {
     client_data *clientData = ATTACHMENT(key);
-    user_data *users = get_users();
+    user_data **users = get_users();
     if (users == NULL) {
         return FALSE;
     }
@@ -29,7 +29,7 @@ boolean handle_users(struct selector_key *key) {
     snprintf(response, response_size, "Users qty: %zu\n", users_amount);
 
     for (int i = 0; i < users_amount; i++) {
-        snprintf(response + strlen(response), response_size - strlen(response), "%d -> %-20s %s\n", i, users[i].name, users[i].logged ? "online" : "offline");
+        snprintf(response + strlen(response), response_size - strlen(response), "%d -> %-20s %s\n", i, users[i]->name, users[i]->logged ? "online" : "offline");
     }
 
     write_std_response(OK, response, key);
