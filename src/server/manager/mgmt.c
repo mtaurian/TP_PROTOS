@@ -2,6 +2,7 @@
 #include "include/mgmt.h"
 #include "../../shared/include/utils.h"
 #include "manager_states_definition/include/non_authenticated_mgmt.h"
+#include "manager_states_definition/include/authenticated_mgmt.h"
 
 static struct mgmt_server * mgmt_server;
 
@@ -15,10 +16,10 @@ static const struct state_definition states [] = {
         },
         {
             .state            = AUTHENTICATED,
-            .on_arrival       = NULL,
-            .on_departure     = NULL,
-            .on_read_ready    = NULL,
-            .on_write_ready   = NULL,
+            .on_arrival       = authenticated_on_arrival,
+            .on_departure     = authenticated_on_departure,
+            .on_read_ready    = authenticated_on_read_ready,
+            .on_write_ready   = authenticated_on_write_ready,
         }
     };
 

@@ -73,13 +73,14 @@ unsigned int log_user(user_data *user);
 user_data * validate_user(char *username, char *password);
 void free_user_data(user_data *user);
 void set_maildir(char *maildir);
-
 unsigned int load_mailbox(user_data *user);
 void free_mailbox(t_mailbox* mails);
 
 
 // for management server
 size_t get_historic_connections();
+user_data * get_users();
+size_t get_users_amount();
 
 
 // could be in a utils file

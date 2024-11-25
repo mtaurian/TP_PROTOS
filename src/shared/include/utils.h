@@ -62,7 +62,8 @@ typedef enum errors {
     AUTHENTICATION_FAILED,
     INVALID_MESSAGE_NUMBER,
     UNKNOWN_COMMAND,
-    NOICE_AFTER_MESSAGE
+    NOICE_AFTER_MESSAGE,
+    INTERNAL_ERROR
 } errors;
 
 typedef struct complete_error {

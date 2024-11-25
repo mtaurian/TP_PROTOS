@@ -323,3 +323,11 @@ void free_mailbox(t_mailbox* mails) {
         free(mails);
     }
 }
+
+user_data * get_users(){
+    return server->users_list;
+}
+
+size_t get_users_amount(){
+    return server->user_amount;
+}
