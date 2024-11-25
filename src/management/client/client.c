@@ -67,7 +67,7 @@ boolean authenticate(char* usernameAndPassword, int socket) {
 }
 static int sendStringToSocket(int sock, char* s) {
     if (send(sock, s, strlen(s), 0) <= 0) {
-        perror("Error sending message to server");
+        perror("Error sending message to server\n");
         return -1;
     }
     return 0;
