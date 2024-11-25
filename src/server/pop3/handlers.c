@@ -41,39 +41,43 @@ int handle_stat(struct selector_key *key){
   	return 1;
 }
 
-int handle_list(struct selector_key *key, char * mail_number){
-  	long mail_id;
+void handle_list(struct selector_key *key, char * mail_number){
     client_data * clientData = ATTACHMENT(key);
     t_mailbox * mailbox = clientData->user->mailbox;
+
+  	long mail_id;
 	char response[MAX_RESPONSE_SIZE];
 	char *endptr;
+
     if(*mail_number != '\0' ){
         mail_id = strtol(mail_number, &endptr, 10);
 		if (*endptr != '\0') {
-			write_error_message_with_arg(key,NOICE_AFTER_MESSAGE,endptr);
-			endptr=NULL;
-			return ERR;
+			write_error_message_with_arg(key, NOICE_AFTER_MESSAGE, endptr);
+			endptr = NULL;
+			return;
 		}
 	    if (mail_id > 0) {
     		printf("[POP3] List mail number:%ld\n", mail_id);
 	        if (mail_id <= mailbox->mail_count){
 	        	if(!mailbox->mails[mail_id - 1].deleted) {
-	        		snprintf(response, sizeof(response), "%ld %zu\r\n", mail_id, mailbox->mails[mail_id - 1].size);
-	        		write_std_response(1,response, key);
-	        		return OK;
+	        		snprintf(response, sizeof(response), "%ld %zu", mail_id, mailbox->mails[mail_id - 1].size);
+	        		write_std_response(OK,response, key);
+	        		return;
 	        	}	else {
 	        		write_error_message(key,MESSAGE_ALREADY_DELETED);
-	        		return ERR;
+	        		return;
 	        	}
 	        } else {
 				write_error_message_with_arg(key,NO_MESSAGE,mail_number);
-        		return ERR;
+        		return;
 	        }
 	    } else {
 			write_error_message_with_arg(key,INVALID_MESSAGE_NUMBER,mail_number);
-	    	return ERR;
+	    	return;
 	    }
     }
+
+    
 
     snprintf(response, MAX_RESPONSE_SIZE, "%d messages (%zu octets)\r\n", mailbox->mail_count, mailbox->mails_size);
 
@@ -84,11 +88,11 @@ int handle_list(struct selector_key *key, char * mail_number){
         	strcat(response, mail_info);
     	}
 	}
-    strcat(response, ".\r\n");
+    strcat(response, ".");
 
 	write_std_response(OK, response, key);
 
-	return OK;
+	return;
 }
 
 int handle_retr(struct selector_key *key, char *mail_number) {

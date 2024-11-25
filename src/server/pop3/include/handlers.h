@@ -13,7 +13,7 @@ int handle_user(struct selector_key *key, char * username);
 int handle_pass(struct selector_key *key, char * password);
 
 int handle_stat(struct selector_key *key);
-int handle_list(struct selector_key *key, char * mail_number);
+void handle_list(struct selector_key *key, char * mail_number);
 int handle_retr(struct selector_key *key, char * mail_number);
 void handle_dele(struct selector_key *key, char * mail_number);
 void handle_rset(struct selector_key *key);
