@@ -42,28 +42,37 @@ int handle_stat(struct selector_key *key){
 }
 
 int handle_list(struct selector_key *key, char * mail_number){
-  	int mail_id;
+  	long mail_id;
     client_data * clientData = ATTACHMENT(key);
     t_mailbox * mailbox = clientData->user->mailbox;
-
-    if(mail_number == NULL) {
-        mail_id = -1;
-    } else {
-        mail_id = atoi(mail_number);   // TODO: list -1 returns same error as the rest
-    }
-
-    char *response = malloc(MAX_RESPONSE_SIZE);
-
-    if (mail_id > 0) {
-        if (mail_id <= mailbox->mail_count && !mailbox->mails[mail_id - 1].deleted) {
-            snprintf(response, sizeof(response), "%d %zu\r\n", mail_id, mailbox->mails[mail_id - 1].size);
-            write_std_response(1,response, key);
-        } else {
-            free(response);
-          	return 0;
-        }
-        free(response);
-        return 1;
+	char response[MAX_RESPONSE_SIZE];
+	char *endptr;
+    if(*mail_number != '\0' ){
+        mail_id = strtol(mail_number, &endptr, 10);
+		if (*endptr != '\0') {
+			write_error_message_with_arg(key,NOICE_AFTER_MESSAGE,endptr);
+			endptr=NULL;
+			return ERR;
+		}
+	    if (mail_id > 0) {
+    		printf("[POP3] List mail number:%ld\n", mail_id);
+	        if (mail_id <= mailbox->mail_count){
+	        	if(!mailbox->mails[mail_id - 1].deleted) {
+	        		snprintf(response, sizeof(response), "%ld %zu\r\n", mail_id, mailbox->mails[mail_id - 1].size);
+	        		write_std_response(1,response, key);
+	        		return OK;
+	        	}	else {
+	        		write_error_message(key,MESSAGE_ALREADY_DELETED);
+	        		return ERR;
+	        	}
+	        } else {
+				write_error_message_with_arg(key,NO_MESSAGE,mail_number);
+        		return ERR;
+	        }
+	    } else {
+			write_error_message_with_arg(key,INVALID_MESSAGE_NUMBER,mail_number);
+	    	return ERR;
+	    }
     }
 
     snprintf(response, MAX_RESPONSE_SIZE, "%d messages (%zu octets)\r\n", mailbox->mail_count, mailbox->mails_size);
@@ -77,15 +86,14 @@ int handle_list(struct selector_key *key, char * mail_number){
 	}
     strcat(response, ".\r\n");
 
-	write_std_response(1, response, key);
+	write_std_response(OK, response, key);
 
-    free(response);
-
-	return 1;
+	return OK;
 }
 
 int handle_retr(struct selector_key *key, char *mail_number) {
 	client_data *clientData = ATTACHMENT(key);
+
 	t_mailbox *mailbox = clientData->user->mailbox;
 
 	int mail_id = atoi(mail_number); // TODO: atoi breaks when float
