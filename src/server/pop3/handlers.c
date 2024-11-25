@@ -10,7 +10,7 @@ int handle_user(struct selector_key *key, char * username){
     clientData->username = malloc((userNameLength+1) * sizeof(char));
     strcpy(clientData->username, username);
 
-    printf("Username set: %s\n", username);
+    printf("[POP3] Username set: %s\n", username);
     return 1;
 }
 
@@ -23,10 +23,7 @@ int handle_pass(struct selector_key *key, char * password){
     client_data * clientData = ATTACHMENT(key);
     unsigned long length = strlen(password);
 
-    clientData->password = malloc((length+1) * sizeof(char));
-    strcpy(clientData->password, password);
-
-    clientData->user = validate_user(clientData->username, clientData->password);
+    clientData->user = validate_user(clientData->username, password);
     if(clientData->user && log_user(clientData->user)){
         return 1;
     }
