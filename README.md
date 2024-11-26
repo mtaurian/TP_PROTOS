@@ -54,9 +54,9 @@ Por ejemplo, una estructura válida sería la siguiente:
 ```bash
 mail
 ├── user1
-│    ├── cur
+│   ├── cur
 │   ├── new
-|   |    └── mail1
+│   │    └── mail1
 │   └── tmp
 └── user2
     ├── cur
@@ -71,14 +71,14 @@ TP_PROTOS
 ├── docs
 └── src
     ├── management
-    |   └── client
+    │   └── client
     └── server
     │   ├── manager
-    │   |    ├── include
-    |   |    └── manager_states_definition
-    |   └── pop3
-    │   |    ├── include
-    |   |    └── states_definition
+    │   │    ├── include
+    │   │    └── manager_states_definition
+    │   └── pop3
+    │   │    ├── include
+    │   │    └── states_definition
     └── shared
     └── testing
 ```
