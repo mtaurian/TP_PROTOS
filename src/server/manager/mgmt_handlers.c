@@ -72,34 +72,50 @@ boolean handle_metrics(struct selector_key * key){
     return TRUE;
 }
 
-
 boolean handle_access_log(struct selector_key *key) {
-    access_log **log = get_access_log();
-    size_t log_entry_size = MAX_RESPONSE;
-    char *log_entry = malloc(log_entry_size);
-    if (log_entry == NULL) {
+    access_log **logs = get_access_log();
+    size_t log_count = get_log_size();
+    if (logs == NULL || log_count == 0) {
+        write_std_response(OK, "No logs available.\n", key);
+        return TRUE;
+    }
+
+    // Estimación inicial del tamaño de buffer
+    size_t buffer_size = MAX_RESPONSE_SIZE;
+    char *log_buffer = malloc(buffer_size);
+    if (log_buffer == NULL) {
         return FALSE;
     }
-    log_entry[0] = '\0'; // Initialize the buffer
+    log_buffer[0] = '\0';
 
-    for(int i = 0; i < get_log_size(); i++) {
-        char time_buffer[20];
-        strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", localtime(&log[i]->access_time));
-
-        size_t required_size = strlen(log_entry) + strlen(time_buffer) + strlen(log[i]->user->name) + 10;
-        if (required_size > log_entry_size) {
-            log_entry_size = required_size + MAX_RESPONSE_SIZE;
-            char *temp = realloc(log_entry, log_entry_size);
-            if (temp == NULL) {
-                free(log_entry);
-                return FALSE;
-            }
-            log_entry = temp;
+    for (size_t i = 0; i < log_count; i++) {
+        access_log *log = logs[i];
+        if (log == NULL || log->user == NULL || log->user->name == NULL) {
+            continue;
         }
 
-        snprintf(log_entry, log_entry_size + MAX_RESPONSE_SIZE, "%s %s %s %s\n", log_entry, time_buffer, log[i]->user->name, log[i]->type ? "LOGIN" : "LOGOUT");
+        char time_buffer[20];
+        strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", localtime(&log->access_time));
+
+        char entry[256];
+        snprintf(entry, sizeof(entry), "%s %-20s %-20s\n",
+                 time_buffer, log->user->name, log->type ? "LOGIN" : "LOGOUT");
+
+        size_t required_size = strlen(log_buffer) + strlen(entry) + 1; // +1 para el terminador nulo
+        if (required_size > buffer_size) {
+            buffer_size = required_size + MAX_RESPONSE_SIZE;
+            char *temp = realloc(log_buffer, buffer_size);
+            if (temp == NULL) {
+                free(log_buffer);
+                return FALSE;
+            }
+            log_buffer = temp;
+        }
+
+        strcat(log_buffer, entry);
     }
-    write_std_response(OK, log_entry, key);
-    free(log_entry);
+
+    write_std_response(OK, log_buffer, key);
+    free(log_buffer);
     return TRUE;
 }
