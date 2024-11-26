@@ -98,7 +98,7 @@ void mgmt_passive_accept(struct selector_key *_key) {
         free(clientData);
         close(client_fd);
     } else {
-        printf("Client connected - mgmt\n");
+        printf("[MGMT] Client connected\n");
     }
 
 }
@@ -143,7 +143,7 @@ void mgmt_user(const char *s) {
         user->logged = 0;
         mgmt_server->admin_amount++;
 
-        printf("User %s:%s added\n", name, pass);
+        printf("[MGMT] User %s:%s added\n", name, pass);
     }
 }
 

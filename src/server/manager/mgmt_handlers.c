@@ -26,7 +26,7 @@ boolean handle_users(struct selector_key *key) {
         return FALSE;
     }
 
-    snprintf(response, response_size, "Users qty: %zu\n", users_amount);
+    snprintf(response, response_size, "Users quantity: %zu\r\n", users_amount);
 
     for (int i = 0; i < users_amount; i++) {
         snprintf(response + strlen(response), response_size - strlen(response), "%d -> %-20s %s\n", i, users[i]->name, users[i]->logged ? "online" : "offline");
@@ -39,7 +39,7 @@ boolean handle_users(struct selector_key *key) {
 
 boolean handle_add_user(struct selector_key * key, char * arg){
     if (add_user(arg)) {
-        write_std_response(OK, "User added successfully", key);
+        write_ok_message(key, USER_ADDED);
         return TRUE;
     } else {
         write_error_message(key, CANNOT_ADD_USER);
@@ -61,7 +61,7 @@ boolean handle_metrics(struct selector_key * key){
         return FALSE;
     }
 
-    snprintf(metrics, MAX_RESPONSE, "\nCurrent connections: %u\nBytes transferred: %zu\nHistoric connections: %u\n", current_connections, bytes_transferred, historic_connections);
+    snprintf(metrics, MAX_RESPONSE, "\nCurrent connections: %u\nBytes transferred: %zu\nHistoric connections: %u\r\n", current_connections, bytes_transferred, historic_connections);
 
     write_std_response(OK, metrics, key);
     free(metrics);

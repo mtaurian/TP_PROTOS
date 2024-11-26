@@ -28,7 +28,6 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
             }
             break;
         case QUIT:
-            printf("Quitting, but from pass\n");
             write_ok_message(key, LOGOUT_OUT);
             handle_quit(key);
         	break;

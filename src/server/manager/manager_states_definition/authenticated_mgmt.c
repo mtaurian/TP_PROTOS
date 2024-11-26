@@ -1,11 +1,11 @@
 #include "include/authenticated_mgmt.h"
 
 void authenticated_on_arrival(const unsigned state, struct selector_key *key) {
-    printf("Entered in AUTHENTICATED state\n");
+    printf("[MGMT] Entered in AUTHENTICATED state\n");
 }
 
 void authenticated_on_departure(const unsigned state, struct selector_key *key) {
-    printf("Exited AUTHENTICATED state\n");
+    printf("[MGMT] Exited AUTHENTICATED state\n");
 }
 
 unsigned int authenticated_on_read_ready(struct selector_key *key){
@@ -27,7 +27,7 @@ unsigned int authenticated_on_read_ready(struct selector_key *key){
             break;
         case DELETE_USER:
             if (handle_delete_user(key, entry.arg)){
-                write_std_response(OK, "User deleted successfully", key);
+                write_ok_message(key, USER_DELETED);
             } else {
                 write_error_message(key, CANNOT_DEL_USER);
             }

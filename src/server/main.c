@@ -34,7 +34,7 @@ static bool done = false;
 
 
 static void sigterm_handler(const int signal) {
-    printf("Signal %d, cleaning up and exiting\n",signal);
+    printf("[INFO] Signal %d, cleaning up and exiting\n",signal);
     done = true;
 }
 
@@ -186,17 +186,17 @@ int main(const int argc,char **argv) {
     setsockopt(mgmt_fd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
 
     if (bind(mgmt_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        err_msg = "unable to bind socket - management";
+        err_msg = "[MGMT] Unable to bind socket.";
         goto finally;
     }
 
     if (listen(mgmt_fd, 20) < 0) {
-        err_msg = "unable to listen - management";
+        err_msg = "[MGMT] Unable to listen.";
         goto finally;
     }
 
     if(selector_fd_set_nio(mgmt_fd) == -1) {
-        err_msg = "getting server socket flags";
+        err_msg = "[INFO] Getting server socket flags.";
         goto finally;
     }
 
@@ -209,21 +209,21 @@ int main(const int argc,char **argv) {
     // register as reader
     ss = selector_register(selector, mgmt_fd, &management,OP_READ, NULL);
     if(ss != SELECTOR_SUCCESS) {
-        err_msg = "registering fd";
+        err_msg = "[MGMT] Error registering fd.";
         goto finally;
     }
 
-    printf("Server listening - Management\n");
+    printf("[MGMT] Server listening\n");
 
     while(!done) {
         ss = selector_select(selector);
         if(ss != SELECTOR_SUCCESS) {
-            err_msg = "serving - Management";
+            err_msg = "[MGMT] Error serving.";
             goto finally;
         }
     }
 
-    printf("closing\n");
+    printf("[INFO] Closing\n");
 
     int ret = 0;
 
@@ -251,7 +251,7 @@ finally:
 
     if(mgmt_fd >= 0) {
         close(mgmt_fd);
-        printf("Servidor de management cerrado.\n");
+        printf("[MGMT] Server closed.\n");
     }
 
     free(pop3config);

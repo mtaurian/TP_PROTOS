@@ -45,14 +45,14 @@ boolean authenticate(char* usernameAndPassword, int socket) {
     snprintf(loginCredentials, BUFFER_SIZE, "login %s", usernameAndPassword);
 
     if (send(socket, loginCredentials, strlen(loginCredentials), 0) < 0) {
-        printf("Error sending credentials to server\n");
+        printf("[MGMT] Error sending credentials to server\n");
         return false;
     }
 
     char response[BUFFER_SIZE];
     int bytesRead = read(socket, response, BUFFER_SIZE - 1);
     if (bytesRead <= 0) {
-        printf("Error receiving response from server\n");
+        printf("[MGMT] Error receiving response from server\n");
         return false;
     }
 
@@ -61,24 +61,27 @@ boolean authenticate(char* usernameAndPassword, int socket) {
     if (strncmp(response, "+OK", 3) == 0) {
         return true;
     } else {
-        printf("Authentication failed: %s\n", response);
+        printf("[MGMT] Authentication failed: %s\n", response);
         return false;
     }
 }
 static int sendStringToSocket(int sock, char* s) {
     if (send(sock, s, strlen(s), 0) <= 0) {
-        perror("Error sending message to server\n");
+        perror("[MGMT] Error sending message to server\n");
         return -1;
     }
     return 0;
 }
+
+
+
 boolean send_command(struct clientArgs * client_args, int socket) {
     char commandString[BUFFER_SIZE];
     const char* commandName;
     switch (client_args->command) {
         case USERS:
             return sendStringToSocket(socket, "users");
-        break;
+            break;
         case ADD_USER:
             commandName = "addu";
             snprintf(commandString, BUFFER_SIZE, "%s %s", commandName, client_args->payload);
@@ -96,8 +99,8 @@ boolean send_command(struct clientArgs * client_args, int socket) {
             return sendStringToSocket(socket, "logs");
             break;
         default:
-            printf("Invalid command\n");
-        return false;
+            printf("[MGMT] Invalid command\n");
+            return false;
     }
     return true;
 }
@@ -107,7 +110,7 @@ int main(const int argc,char **argv) {
     parse_args(argc,argv,clientArguments);
     int sock = conectToServer(clientArguments);
     if (sock < 0) {
-        perror("socket() failed");
+        perror("[MGMT] socket() failed");
         return -1;
     }
     if(!authenticate(clientArguments->usernameAndPassword, sock) || send_command(clientArguments, sock) ) {

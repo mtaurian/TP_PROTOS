@@ -74,13 +74,13 @@ void parse_args(const int argc, char **argv, struct clientArgs *args){
                 args->command = ACCESS_LOG;
                 break;
             default:
-                fprintf(stderr, "unknown argument %d.\n", c);
+                fprintf(stderr, "[MGMT] Unknown argument %d.\n", c);
                 exit(1);
         }
 
     }
     if (optind < argc) {
-        fprintf(stderr, "argument not accepted: ");
+        fprintf(stderr, "[MGMT] Argument not accepted: ");
         while (optind < argc) {
             fprintf(stderr, "%s ", argv[optind++]);
         }

@@ -42,6 +42,8 @@ struct complete_ok oks_list[] = {
     { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted."          },
     { .type = LOGOUT_OUT,                   .message = "Logging out."                   },
     { .type = LOGOUT_OUT_MESSAGES_DELETED,  .message = "Logging out, messages deleted." },
+    { .type = USER_ADDED,                   .message = "User added successfully."       },
+    { .type = USER_DELETED,                 .message = "User deleted successfully."     },
     { .type = JUST_OK,                      .message = NULL                             }
 };
 

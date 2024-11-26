@@ -3,11 +3,11 @@
 #include "../include/mgmt_handlers.h"
 
 void non_authenticated_on_arrival(const unsigned state, struct selector_key *key) {
-    printf("Entered in NON_AUTHENTICATED state\n");
+    printf("[MGMT] Entered in NON_AUTHENTICATED state\n");
 }
 
 void non_authenticated_on_departure(const unsigned state, struct selector_key *key) {
-    printf("Exited NON_AUTHENTICATED state\n");
+    printf("[MGMT] Exited NON_AUTHENTICATED state\n");
 }
 
 unsigned int non_authenticated_on_read_ready(struct selector_key *key) {
@@ -21,13 +21,14 @@ unsigned int non_authenticated_on_read_ready(struct selector_key *key) {
     switch (entry.command) {
         case LOGIN:
             if (handle_login(key, entry.arg)) {
-                write_std_response(OK, "Logged in", key);
+                write_ok_message(key, AUTHENTICATION_SUCCESSFUL);
                 ret = AUTHENTICATED;
             } else {
                 write_error_message(key, AUTHENTICATION_FAILED);
             }
             break;
         case QUIT:
+            write_ok_message(key, LOGOUT_OUT);
             handle_quit(key);
             break;
         default:
