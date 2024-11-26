@@ -60,6 +60,7 @@ void initialize_pop3_server() {
     server->user_amount = 0;
     server->bytes_transferred = 0;
     server->maildir = NULL;
+    server->transformation = NULL;
 
     pthread_mutex_init(&server->hc_mutex, NULL);
     server->historic_connections = 0;
@@ -72,6 +73,10 @@ void free_pop3_server() {
 
     if(server->maildir) {
         free(server->maildir);
+    }
+
+        if(server->transformation) {
+        free(server->transformation);
     }
 
     pthread_mutex_destroy(&server->hc_mutex);
@@ -425,4 +430,41 @@ size_t get_bytes_transferred() {
 
 void add_bytes_transferred(size_t bytes) {
     server->bytes_transferred += bytes;
+}
+
+
+int transform_mail_piping(int mail_fd) {
+    if(server->transformation == NULL) {
+        set_transformation("/bin/cat");
+    }
+
+    int output_pipe[2];
+    if(pipe(output_pipe) == -1) {
+        printf("[POP3] Error creating output pipes\n");
+        return ERR;
+    }
+
+    pid_t PID = fork();
+
+    switch (PID) {
+        case -1:
+            printf("[POP3] Error creating child process\n");
+            return ERR;
+            break;
+        case 0:
+
+            dup2(mail_fd, STDIN_FILENO);
+            dup2(output_pipe[1], STDOUT_FILENO);
+
+            close(output_pipe[0]);
+
+            execv(server->transformation, NULL);
+
+            break;
+        default:
+            close(output_pipe[1]);
+            break;
+    }
+    
+    return output_pipe[0];
 }

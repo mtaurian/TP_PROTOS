@@ -94,4 +94,7 @@ unsigned char delete_user(char * username);
 void add_bytes_transferred(size_t bytes);
 // could be in a utils file
 size_t get_file_size(const char *filename);
+
+int transform_mail_piping(int mail_fd);
+
 #endif //POP3_H
