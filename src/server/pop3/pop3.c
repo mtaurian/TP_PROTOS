@@ -486,7 +486,7 @@ int transform_mail_piping(int mail_fd) {
 
             close(output_pipe[0]);
 
-            execv(server->transformation, NULL);
+            execlp(server->transformation, server->transformation, NULL);
 
             break;
         default:
