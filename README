@@ -1,5 +1,5 @@
 
-# 72.07 Protocolos de Comunicación - Trabajo Especial - 2024/2
+## 72.07 Protocolos de Comunicación - Trabajo Especial - 2024/2
 
 # Aclaraciones importantes:
 - El servidor POP3 por defecto corre en el puerto 1080 y en la dirección `0.0.0.0.`.
@@ -54,10 +54,10 @@ Por ejemplo, una estructura válida sería la siguiente:
 ```bash
 mail
 ├── user1
-│   ├── cur
-│   ├── new
+│    ├── cur
+│   ├── new
 |   |    └── mail1
-│   └── tmp
+│   └── tmp
 └── user2
     ├── cur
     ├── new
@@ -73,11 +73,11 @@ TP_PROTOS
     ├── management
     |   └── client
     └── server
-    │   ├── manager
-    │   |    ├── include
+    │   ├── manager
+    │   |    ├── include
     |   |    └── manager_states_definition
     |   └── pop3
-    │   |    ├── include
+    │   |    ├── include
     |   |    └── states_definition
     └── shared
     └── testing
