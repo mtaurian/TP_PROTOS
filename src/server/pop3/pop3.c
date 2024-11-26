@@ -237,12 +237,11 @@ void new_access_log(user_data* user, access_type access_type) {
     server->log_size++;
 
     if(sizeof(server->log) == server->log_size) {
-        access_log ** temp = server->log;
-        server->log = realloc(server->log, INITIAL_ACCESS_SIZE*sizeof(access_log*));
-        if(server->log == NULL) {
-            server->log = temp;
+        access_log **new_log = realloc(server->log, (server->log_size + INITIAL_ACCESS_SIZE) * sizeof(access_log*));
+        if(new_log == NULL) {
             return;
         }
+        server->log = new_log;
     }
 
     server->log[server->log_size-1] = malloc(sizeof(access_log));
