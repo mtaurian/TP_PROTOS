@@ -38,7 +38,9 @@ unsigned int authenticated_on_read_ready(struct selector_key *key){
             }
             break;
         case ACCESS_LOG:
-
+            if (!handle_access_log(key)){
+                write_error_message(key, INTERNAL_ERROR);
+            }
             break;
         default:
             write_error_message(key, UNKNOWN_COMMAND);
