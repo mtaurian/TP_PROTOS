@@ -79,6 +79,7 @@ typedef struct complete_error {
 
 typedef enum oks {
     INITIAL_BANNER = 0,
+    INIT_BANNER,
     AUTHENTICATION_SUCCESSFUL,
     MARKED_TO_BE_DELETED,
     LOGOUT_OUT,

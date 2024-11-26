@@ -26,7 +26,8 @@ struct mgmt_server {
 
 
 enum mgmt_states {
-    NON_AUTHENTICATED = 0,
+    INIT = 0,
+    NON_AUTHENTICATED,
     AUTHENTICATED
 };
 

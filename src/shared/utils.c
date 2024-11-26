@@ -38,6 +38,7 @@ struct complete_error errors_list[] = {
 
 struct complete_ok oks_list[] = {
     { .type = INITIAL_BANNER,               .message = "POP3 server ready."             },
+    { .type = INIT_BANNER,                  .message = "MGMT server ready."             },
     { .type = AUTHENTICATION_SUCCESSFUL,    .message = "Logged in."                     },
     { .type = MARKED_TO_BE_DELETED,         .message = "Marked to be deleted."          },
     { .type = LOGOUT_OUT,                   .message = "Logging out."                   },
