@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <check.h>
 
-#include "../include/parser_utils.h"
+#include "../shared/include/parser_utils.h"
 #include "tests.h"
 static void
 assert_eq(const unsigned type, const int c, const struct parser_event *e) {
