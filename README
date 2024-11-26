@@ -1,7 +1,7 @@
 
-## 72.07 Protocolos de Comunicación - Trabajo Especial - 2024/2
+# 72.07 Protocolos de Comunicación - Trabajo Especial - 2024/2
 
-# Aclaraciones importantes:
+## Aclaraciones importantes:
 - El servidor POP3 por defecto corre en el puerto 1080 y en la dirección `0.0.0.0.`.
 - La aplicación que implementa el protocolo MGMT corre por defecto en el puerto 8080 y en la dirección `127.0.0.1.`.
 Estos valores se puede cambiar por parámetro al ejecutar el servidor. Ver sección "Ejecución del Servidor" para más información.
