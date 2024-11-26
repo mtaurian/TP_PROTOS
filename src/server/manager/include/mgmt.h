@@ -26,7 +26,8 @@ struct mgmt_server {
 
 
 enum mgmt_states {
-    NON_AUTHENTICATED = 0,
+    INIT = 0,
+    NON_AUTHENTICATED,
     AUTHENTICATED
 };
 
@@ -38,6 +39,7 @@ void mgmt_passive_accept(struct selector_key *_key);
 void close_mgmt_client(struct selector_key * _key);
 super_user_data * validate_admin(const char *name, const char *pass);
 void mgmt_user(const char *s);
+
 
 
 #endif //TP_PROTOS_MGMT_H

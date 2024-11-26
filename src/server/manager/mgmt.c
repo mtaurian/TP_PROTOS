@@ -1,12 +1,20 @@
 #include <stdlib.h>
 #include "include/mgmt.h"
 #include "../../shared/include/utils.h"
+#include "manager_states_definition/include/init_mgmt.h"
 #include "manager_states_definition/include/non_authenticated_mgmt.h"
 #include "manager_states_definition/include/authenticated_mgmt.h"
 
 static struct mgmt_server * mgmt_server;
 
 static const struct state_definition states [] = {
+        {
+            .state            = INIT,
+            .on_arrival       = init_on_arrival,
+            .on_departure     = init_on_departure,
+            .on_read_ready    = NULL,
+            .on_write_ready   = init_on_ready_to_write,
+        },
         {
             .state            = NON_AUTHENTICATED,
             .on_arrival       = non_authenticated_on_arrival,
@@ -78,13 +86,13 @@ void mgmt_passive_accept(struct selector_key *_key) {
     buffer_init(&clientData->clientBuffer, BUFFER_MAX_SIZE, clientData->inClientBuffer);
     buffer_init(&clientData->responseBuffer, BUFFER_MAX_SIZE, clientData->inResponseBuffer);
 
-    clientData->stm.initial = NON_AUTHENTICATED;
+    clientData->stm.initial = INIT;
     clientData->stm.max_state = AUTHENTICATED;
     stm_init(&clientData->stm);
-    ss = selector_register(_key->s, client_fd, &client_handler, OP_READ, clientData);
+    ss = selector_register(_key->s, client_fd, &client_handler, OP_WRITE, clientData);
 
     if (ss != SELECTOR_SUCCESS) {
-        err_msg = "Unable to register client socket handler";
+        err_msg = "[MGMT] Unable to register client socket handler";
     }
 
     finally:
@@ -98,7 +106,7 @@ void mgmt_passive_accept(struct selector_key *_key) {
         free(clientData);
         close(client_fd);
     } else {
-        printf("Client connected - mgmt\n");
+        printf("[MGMT] Client connected\n");
     }
 
 }
@@ -143,13 +151,16 @@ void mgmt_user(const char *s) {
         user->logged = 0;
         mgmt_server->admin_amount++;
 
-        printf("User %s:%s added\n", name, pass);
+        printf("[MGMT] User %s:%s added\n", name, pass);
     }
 }
 
 super_user_data * validate_admin(const char *name, const char *pass){
     for(int i = 0; i < mgmt_server->admin_amount; i++) {
         super_user_data *user = &mgmt_server->users_list[i];
+        if(user->name == NULL || user->pass == NULL) {
+            return NULL;
+        }
         if(strcmp(user->name, name) == 0 && strcmp(user->pass, pass) == 0) {
             return &mgmt_server->users_list[i];
         }

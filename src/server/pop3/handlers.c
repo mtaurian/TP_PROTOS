@@ -15,9 +15,7 @@ int handle_user(struct selector_key *key, char * username){
 }
 
 void handle_quit(struct selector_key *key){
-    printf("in handle_quit PRE close_client\n");
     close_client(key);
-    printf("in handle_quit POST close_client\n");
 }
 
 int handle_pass(struct selector_key *key, char * password){
@@ -38,8 +36,8 @@ int handle_stat(struct selector_key *key){
 
     char response[128];
     snprintf(response, sizeof(response), "%d %zd\r\n", clientData->user->mailbox->mail_count , clientData->user->mailbox->mails_size);
-    write_std_response(1,response, key);
-  	return 1;
+    write_std_response(OK,response, key);
+  	return OK;
 }
 
 void handle_list(struct selector_key *key, char * mail_number){
@@ -238,7 +236,6 @@ void handle_rset(struct selector_key *key){
 }
 
 void handle_update_quit(struct selector_key *key){
-    printf("in handle_update_quit\n");
 	client_data * clientData = ATTACHMENT(key);
     t_mailbox * mailbox = clientData->user->mailbox;
 
@@ -246,7 +243,7 @@ void handle_update_quit(struct selector_key *key){
 	for (int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++) {
 		if (mailbox->mails[i].deleted) {
             has_message_been_deleted = TRUE;
-            printf("Deleting message %s\n", mailbox->mails[i].filename);
+            printf("[POP3] Deleting message %s\n", mailbox->mails[i].filename);
 			remove(mailbox->mails[i].filename);
 		}
 	}
@@ -255,7 +252,5 @@ void handle_update_quit(struct selector_key *key){
     } else {
         write_ok_message(key, LOGOUT_OUT);
     }
-    printf("Exiting handle_update_quit PRE handle_quit\n");
     handle_quit(key);
-    printf("Exiting handle_update_quit POST handle_quit\n");
 }
