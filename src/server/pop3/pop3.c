@@ -91,14 +91,14 @@ void free_pop3_server() {
 }
 
 void free_user_data(user_data *user) {
-    if (user->name) {
-        free(user->name);
+    if (user->name != NULL) {
+        free(user->name );
     }
-    if (user->pass) {
+    if (user->pass!= NULL) {
         free(user->pass);
     }
 
-    if (user->logged && user->mailbox) {
+    if (user->logged && user->mailbox != NULL) {
         free_mailbox(user->mailbox);
         user->mailbox = NULL;
     }
@@ -403,16 +403,6 @@ unsigned char add_user(char * user_and_pass){
         return FALSE;
     } else {
         if(user(user_and_pass)) {
-            char *path = malloc(PATH_MAX);
-            snprintf(path, PATH_MAX, "%s/%s", server->maildir, server->users_list[server->user_amount - 1]->name);
-            mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/cur", server->maildir, server->users_list[server->user_amount - 1]->name);
-            mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/new", server->maildir, server->users_list[server->user_amount - 1]->name);
-            mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/tmp", server->maildir, server->users_list[server->user_amount - 1]->name);
-            mkdir(path, 0777);
-            free(path);
             return TRUE;
         }
         return FALSE;
