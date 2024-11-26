@@ -61,8 +61,9 @@ void initialize_pop3_server() {
     server->bytes_transferred = 0;
     server->maildir = NULL;
 
-    pthread_mutex_init(&server->hc_mutex, NULL);
     server->historic_connections = 0;
+    server->log = NULL;
+    server->log_size = 0;
 }
 
 void free_pop3_server() {
@@ -74,7 +75,10 @@ void free_pop3_server() {
         free(server->maildir);
     }
 
-    pthread_mutex_destroy(&server->hc_mutex);
+    for (int i = 0; i < server->log_size; i++) {
+        free(server->log[i]);
+    }
+
     free(server);
 }
 
@@ -121,6 +125,8 @@ void pop3_passive_accept(struct selector_key *_key) {
     clientData->clientAddress = client_addr;
     clientData->username = NULL;
     clientData->password = NULL;
+    clientData->user = NULL;
+
     clientData->stm.states = states;
     buffer_init(&clientData->clientBuffer, BUFFER_SIZE, clientData->inClientBuffer);
     buffer_init(&clientData->responseBuffer, BUFFER_SIZE, clientData->inResponseBuffer);
@@ -134,9 +140,7 @@ void pop3_passive_accept(struct selector_key *_key) {
     }
 
     //manager metrics
-    pthread_mutex_lock(&server->hc_mutex);
     server->historic_connections++;
-    pthread_mutex_unlock(&server->hc_mutex);
 
     finally:
     if(ss != SELECTOR_SUCCESS) {
@@ -227,6 +231,14 @@ void set_transformation(const char *transformation) {
     strcpy(server->transformation, transformation);
 }
 
+void new_access_log(user_data* user, access_type access_type) {
+    server->log_size++;
+    server->log[server->log_size-1] = malloc(sizeof(access_log));
+    server->log[server->log_size-1]->access_time = time(NULL);
+    server->log[server->log_size-1]->type = access_type;
+    server->log[server->log_size-1]->user = user;
+}
+
 unsigned int log_user(user_data *user) {
     if(user->logged) { // someone is already logged in
         return 0;
@@ -239,6 +251,8 @@ unsigned int log_user(user_data *user) {
     user->mailbox->mails_size = 0;
     user->mailbox->deleted_count = 0;
 
+    new_access_log(user, LOGIN_ACCESS);
+
     return load_mailbox(user);
 }
 
@@ -248,6 +262,7 @@ void log_out_user(user_data *user) {
         free_mailbox(user->mailbox);
         user->mailbox = NULL;
     }
+    new_access_log(user, LOGOUT_ACCESS);
 }
 
 user_data *validate_user(char *username, char *password) {
@@ -425,4 +440,11 @@ size_t get_bytes_transferred() {
 
 void add_bytes_transferred(size_t bytes) {
     server->bytes_transferred += bytes;
+}
+
+size_t get_log_size() {
+    return server->log_size;
+}
+access_log ** get_access_log() {
+    return server->log;
 }

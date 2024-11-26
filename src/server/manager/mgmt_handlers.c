@@ -1,5 +1,7 @@
 #include "include/mgmt_handlers.h"
 
+#include <time.h>
+
 boolean handle_login(struct selector_key *key, char *arg){
     client_data *clientData = ATTACHMENT(key);
     char * username = strtok(arg, ":");
@@ -65,5 +67,34 @@ boolean handle_metrics(struct selector_key * key){
 
     write_std_response(OK, metrics, key);
     free(metrics);
+    return TRUE;
+}
+
+
+unsigned int handle_access_log(struct selector_key *key) {
+    access_log **log = get_access_log();
+    size_t log_entry_size = MAX_RESPONSE;
+    char *log_entry = malloc(log_entry_size);
+    if (log_entry == NULL) {
+        return FALSE;
+    }
+
+    for(int i = 0; i < get_log_size(); i++) {
+        size_t required_size = strlen(log_entry) + MAX_RESPONSE;
+        if (required_size > log_entry_size) {
+            log_entry_size = required_size;
+            char *temp = realloc(log_entry, log_entry_size);
+            if (temp == NULL) {
+                free(log_entry);
+                return FALSE;
+            }
+            log_entry = temp;
+        }
+
+        strftime(log_entry, MAX_RESPONSE, "%Y-%m-%d %H:%M:%S", localtime(&log[i]->access_time));
+        snprintf(log_entry, MAX_RESPONSE, " %s %s\n", log[i]->user->name, log[i]->type ? "LOGIN" : "LOGOUT");
+    }
+    write_std_response(OK, log_entry, key);
+    free(log_entry);
     return TRUE;
 }

@@ -48,14 +48,27 @@ typedef struct user_data {
     unsigned char to_delete; // Flag to delete the user, when user is logged
 } user_data;
 
+typedef enum access_type {
+    LOGIN_ACCESS = 0, LOGOUT_ACCESS
+} access_type;
+
+typedef struct access_log {
+    user_data *user;
+    time_t access_time;
+    access_type type;
+} access_log;
+
 struct pop3_server {
     user_data * users_list[MAX_USERS];
     unsigned int user_amount;
     char* maildir;
+
     char* transformation;
+
     size_t historic_connections; //volatile :/
-    pthread_mutex_t  hc_mutex; // historic connections mutex
     size_t bytes_transferred;
+    access_log **log;
+    size_t log_size;
 };
 
 typedef enum pop3_states {
@@ -92,6 +105,9 @@ unsigned char add_user(char * user_and_pass);
 unsigned char validate_user_not_exists(char * username);
 unsigned char delete_user(char * username);
 void add_bytes_transferred(size_t bytes);
+access_log ** get_access_log();
+size_t get_log_size();
+
 // could be in a utils file
 size_t get_file_size(const char *filename);
 #endif //POP3_H
