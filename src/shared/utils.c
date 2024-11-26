@@ -61,12 +61,12 @@ commands findCommand(char *command) {
     return INVALID;
 }
 
-size_t length_until_newline(const char *str) {
+size_t length_until_newline(const char *str,size_t lengthStr) {
     if (str == NULL) {
         return 0;
     }
     size_t length = 0;
-    while (str[length] != '\n' && str[length] != '\0') {
+    while (str[length] != '\n' && str[length] != '\0' && length<lengthStr) {
         length++;
     }
     if (str[length] == '\n') {
@@ -85,7 +85,7 @@ user_request parse(struct selector_key * key) {
     size_t readable_bytes;
     uint8_t * read_ptr = buffer_read_ptr(&client_Data->clientBuffer, &readable_bytes);
 
-    size_t token_len = length_until_newline((char *) read_ptr);
+    size_t token_len = length_until_newline((char *) read_ptr,readable_bytes);
 
     char *token = strtok((char * ) read_ptr, "\n");
     token = strtok(token, "\r");
