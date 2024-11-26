@@ -9,18 +9,18 @@
 static void
 usage(const char *progname) {
     fprintf(stderr,
-            "Usage: %s -S <username:password> [OPTION]...\n"
+            "Usage: %s -S <user:password> [OPTION]...\n"
                 "\n"
-                "   -h                                      Imprime la ayuda y termina.\n"
-                "   -H <host>                               Direccion donde sirve el servicio de management.Si no se define se usa el valor por defecto 127.0.0.1 \n"
-                "   -P <port>                               Puerto donde sirve el servicio de management.Si no se define se usa el valor por defecto 8080.\n"
-                "   -U                                      Envia una solicitud para obtener los usuarios registrados.\n"
-                "   -A <user:password>                      Envia una solicitud para agregar un usuario al servidor.\n"
-                "   -D <user>                               Envía una solicitud para eliminar un usuario del servidor.\n"
-                "   -M                                      Envia una solicitud para obtener métricas específicas del servidor.\n"
-                "   -L                                      Envia una solicitud para obtener los logs del servidor.\n"
+                "   -h                         Imprime la ayuda y termina.\n"
+                "   -H <host>                  Direccion donde sirve el servicio de management. Si no se define se usa el valor por defecto 127.0.0.1 \n"
+                "   -P <port>                  Puerto donde sirve el servicio de management. Si no se define se usa el valor por defecto 8080.\n"
+                "   -U                         Envia una solicitud para obtener los usuarios registrados.\n"
+                "   -A <user:password>         Envia una solicitud para agregar un usuario al servidor.\n"
+                "   -D <user>                  Envía una solicitud para eliminar un usuario del servidor.\n"
+                "   -M                         Envia una solicitud para obtener métricas específicas del servidor.\n"
+                "   -L                         Envia una solicitud para obtener los logs del servidor.\n"
                 "\n",
-       progname);
+       progname);   
     exit(1);
 }
 

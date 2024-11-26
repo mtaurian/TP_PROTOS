@@ -67,16 +67,16 @@ usage(const char *progname) {
     fprintf(stderr,
         "Usage: %s [OPTION]...\n"
         "\n"
-        "   -h               Imprime la ayuda y termina.\n"
-        "   -l <POP3 addr>   Dirección donde servirá el servidor POP3.\n"
-        "   -L <MGMT addr>   Dirección donde servirá el servicio de management.\n"
-        "   -p <POP3 port>   Puerto entrante conexiones POP3.\n"
-        "   -P <MGMT port>   Puerto entrante conexiones configuracion\n"
-        "   -u <user>:<pass> Usuario y contraseña de usuario que puede usar el servidor.\n"
-        "   -U <user>:<pass> Usuario y contraseña de usuario admin que puede usar el servicio de management.\n"
-        "   -v               Imprime información sobre la versión versión y termina.\n"
-        "   -d <path>        Carpeta donde residen los Maildirs.\n"
-        "   -t <cmd>         Comando para aplicar transformaciones"
+        "   -h                         Imprime la ayuda y termina.\n"
+        "   -l <POP3 addr>             Dirección donde servirá el servidor POP3.\n"
+        "   -L <MGMT addr>             Dirección donde servirá el servicio de management.\n"
+        "   -p <POP3 port>             Puerto entrante conexiones POP3.\n"
+        "   -P <MGMT port>             Puerto entrante conexiones configuracion\n"
+        "   -u <user>:<password>       Usuario y contraseña de usuario que puede usar el servidor.\n"
+        "   -U <user>:<password>       Usuario y contraseña de usuario admin que puede usar el servicio de management.\n"
+        "   -v                         Imprime información sobre la versión versión y termina.\n"
+        "   -d <path>                  Carpeta donde residen los Maildirs.\n"
+        "   -t <cmd>                   Comando para aplicar transformaciones"
         "\n",
         progname);
     exit(1);
