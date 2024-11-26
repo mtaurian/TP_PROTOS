@@ -1,9 +1,11 @@
 #include "include/pop3.h"
+#include "states_definition/include/initial.h"
 #include "states_definition/include/auth_user.h"
 #include "states_definition/include/auth_pass.h"
 #include "states_definition/include/transaction.h"
 #include "states_definition/include/update.h"
 #include <dirent.h>
+#include <pthread.h>
 #include <sys/stat.h>
 
 static struct pop3_server * server;
@@ -16,6 +18,13 @@ static const struct fd_handler client_handler = {
 };
 
 static const struct state_definition states[] = {
+    {
+        .state            = INITIAL,
+        .on_arrival       = initial_on_arrival,
+        .on_departure     = initial_on_departure,
+        .on_read_ready    = NULL,
+        .on_write_ready   = initial_on_ready_to_write,
+    },
     {
         .state            = AUTHORIZATION_USER,
         .on_arrival       = auth_user_on_arrival,
@@ -49,16 +58,35 @@ static const struct state_definition states[] = {
 void initialize_pop3_server() {
     server = malloc(sizeof(struct pop3_server));
     server->user_amount = 0;
+    server->bytes_transferred = 0;
     server->maildir = NULL;
+    server->transformation = NULL;
+
+    server->historic_connections = 0;
+    server->log = NULL;
+    server->log = malloc(INITIAL_ACCESS_SIZE*sizeof(access_log*));
+    server->log_size = 0;
 }
 
 void free_pop3_server() {
     for (int i = 0; i < server->user_amount; i++) {
-        free_user_data(&server->users_list[i]);
+        free_user_data(server->users_list[i]);
     }
+
     if(server->maildir) {
         free(server->maildir);
     }
+
+    if(server->transformation) {
+        free(server->transformation);
+    }
+
+    for (int i = 0; i < server->log_size; i++) {
+        free(server->log[i]);
+    }
+    free(server->log);
+
+
     free(server);
 }
 
@@ -74,11 +102,13 @@ void free_user_data(user_data *user) {
         free_mailbox(user->mailbox);
         user->mailbox = NULL;
     }
+    free(user);
 }
 
 void pop3_passive_accept(struct selector_key *_key) {
     const char *err_msg = NULL;
     struct sockaddr_storage client_addr;
+    selector_status ss = SELECTOR_SUCCESS;
     socklen_t client_addr_len = sizeof(client_addr);
     memset(&client_addr, 0, sizeof(client_addr));
     int client_fd = accept(_key->fd, (struct sockaddr *)&client_addr, &client_addr_len);
@@ -102,33 +132,39 @@ void pop3_passive_accept(struct selector_key *_key) {
     clientData->clientFd = client_fd;
     clientData->clientAddress = client_addr;
     clientData->username = NULL;
+    clientData->password = NULL;
+    clientData->user = NULL;
+
     clientData->stm.states = states;
     buffer_init(&clientData->clientBuffer, BUFFER_SIZE, clientData->inClientBuffer);
     buffer_init(&clientData->responseBuffer, BUFFER_SIZE, clientData->inResponseBuffer);
 
-    clientData->stm.initial = AUTHORIZATION_USER;
+    clientData->stm.initial = INITIAL;
     clientData->stm.max_state = UPDATE;
     stm_init(&clientData->stm);
-    selector_status ss = selector_register(_key->s, client_fd, &client_handler, OP_READ, clientData);
+    ss = selector_register(_key->s, client_fd, &client_handler, OP_WRITE, clientData);
     if (ss != SELECTOR_SUCCESS) {
-       err_msg = "Unable to register client socket handler";
+        err_msg = "[POP3] Unable to register client socket handler";
     }
-finally:
+
+    //manager metrics
+    server->historic_connections++;
+
+    finally:
     if(ss != SELECTOR_SUCCESS) {
-        fprintf(stderr, "%s: %s\n", (err_msg == NULL) ? "": err_msg,
-                                  ss == SELECTOR_IO
-                                      ? strerror(errno)
-                                      : selector_error(ss));
+        fprintf(stderr, "%s: %s\n",  err_msg,
+                ss == SELECTOR_IO
+                ? strerror(errno)
+                : selector_error(ss));
     } else if(err_msg) {
         perror(err_msg);
         free(clientData);
         close(client_fd);
     } else {
-        printf("Client connected\n");
+        printf("[POP3] Client connected\n");
     }
 
 }
-
 
 void close_client(struct selector_key * _key) {
     client_data* data = ATTACHMENT(_key);
@@ -153,73 +189,16 @@ void close_client(struct selector_key * _key) {
     free(data);
 }
 
-
-void read_handler(struct selector_key *_key) {
-    const char *err_msg = NULL;
-    client_data *clientData = ATTACHMENT(_key);
-
-    size_t writable_bytes;
-    uint8_t *write_ptr = buffer_write_ptr(&clientData->clientBuffer, &writable_bytes);
-
-    // READ from socket into buffer
-    ssize_t bytes_received = recv(_key->fd, write_ptr, writable_bytes, 0);
-
-    if (bytes_received <= 0) {
-        if (bytes_received == 0) {
-            err_msg = "Client disconnected";
-        } else {
-            err_msg = "Error in recv";
+unsigned char validate_user_not_exists(char * username){
+    for(int i = 0; i < server->user_amount; i++) {
+        if(strcmp(server->users_list[i]->name, username) == 0) {
+            return FALSE;
         }
-        goto leave;
     }
-
-    buffer_write_adv(&clientData->clientBuffer, bytes_received);
-
-    // READ from socket into buffer
-    stm_handler_read(&clientData->stm, _key);
-
-    leave:
-        if (err_msg) {
-            perror(err_msg);
-            selector_unregister_fd(_key->s, _key->fd);
-            close(_key->fd);
-        } else {
-            selector_set_interest_key(_key, OP_WRITE);
-        }
+    return TRUE;
 }
 
-void write_handler(struct selector_key *_key) {
-    const char *err_msg = NULL;
-    client_data *clientData = ATTACHMENT(_key);
-
-    stm_handler_write(&clientData->stm, _key);
-
-    size_t readable_bytes;
-    uint8_t *read_ptr = buffer_read_ptr(&clientData->responseBuffer, &readable_bytes);
-
-    ssize_t bytes_sent = send(_key->fd, read_ptr, readable_bytes, 0);
-
-    if (bytes_sent < 0) {
-        err_msg = "Error in send";
-        selector_unregister_fd(_key->s, _key->fd);
-        close(_key->fd);
-        goto leave;
-    }
-
-    buffer_read_adv(&clientData->responseBuffer, bytes_sent);
-
-leave:
-
-    if (err_msg) {
-        perror(err_msg);
-    } else {
-        selector_set_interest_key(_key, OP_READ);
-    }
-}
-
-
-void user(char *s) {
-    user_data *user = &server->users_list[server->user_amount];
+unsigned char user(char *s) {
     char *p = strchr(s, ':');
     if(p == NULL) {
         fprintf(stderr, "password not found\n");
@@ -233,17 +212,48 @@ void user(char *s) {
         char * pass = malloc(sizeof(char)*(pass_length+1));
         strcpy(name, s);
         strcpy(pass, p);
-        user->pass = pass;
-        user->name = name;
-        user->logged = 0;
-        server->user_amount++;
+        if (validate_user_not_exists(name)) {
+            server->users_list[server->user_amount] = malloc(sizeof(user_data));
+            user_data * user = server->users_list[server->user_amount];
+            user->pass = pass;
+            user->name = name;
+            user->logged = 0;
+            user->to_delete = 0;
+            server->user_amount++;
+            return TRUE;
+        }
+        free(name);
+        free(pass);
+        return FALSE;
     }
 }
 
-void set_maildir(const char *maildir) {
+void set_maildir(char *maildir) {
     server->maildir = malloc(PATH_MAX);
     strcpy(server->maildir, maildir);
-    printf("MALDIR: %s\n", server->maildir);
+    printf("[POP3] MAILDIR: %s\n", server->maildir);
+}
+
+void set_transformation(const char *transformation) {
+    server->transformation = malloc(PATH_MAX);
+    strcpy(server->transformation, transformation);
+}
+
+void new_access_log(user_data* user, access_type access_type) {
+    server->log_size++;
+
+    if(sizeof(server->log) == server->log_size) {
+        access_log **new_log = realloc(server->log, (server->log_size + INITIAL_ACCESS_SIZE) * sizeof(access_log*));
+        if(new_log == NULL) {
+            return;
+        }
+        server->log = new_log;
+    }
+
+    server->log[server->log_size-1] = malloc(sizeof(access_log));
+    server->log[server->log_size-1]->access_time = time(NULL);
+    server->log[server->log_size-1]->type = access_type;
+    server->log[server->log_size-1]->user = user;
 }
 
 unsigned int log_user(user_data *user) {
@@ -258,7 +268,9 @@ unsigned int log_user(user_data *user) {
     user->mailbox->mails_size = 0;
     user->mailbox->deleted_count = 0;
 
-    return load_mailbox(user);;
+    new_access_log(user, LOGIN_ACCESS);
+
+    return load_mailbox(user);
 }
 
 void log_out_user(user_data *user) {
@@ -267,13 +279,14 @@ void log_out_user(user_data *user) {
         free_mailbox(user->mailbox);
         user->mailbox = NULL;
     }
+    new_access_log(user, LOGOUT_ACCESS);
 }
 
 user_data *validate_user(char *username, char *password) {
     for(int i = 0; i < server->user_amount; i++) {
-        if(strcmp(server->users_list[i].name, username) == 0 && strcmp(server->users_list[i].pass, password) == 0) {
-            printf("Signed in user %s\n", username); // TODO: do as a log
-            return &server->users_list[i]; // TODO: return 1 or 0
+        if(strcmp(server->users_list[i]->name, username) == 0 && strcmp(server->users_list[i]->pass, password) == 0) {
+            printf("[POP3] Signed in user %s\n", username);
+            return server->users_list[i];
         }
     }
     return NULL;
@@ -286,7 +299,8 @@ unsigned int load_mailbox(user_data *user) {
     DIR *dir = opendir(user_maildir);
     if (!dir) {
         free(user_maildir);
-        return 0; // no mails // TODO: error handling
+        printf("[POP3] No new mails.\n");
+        return 0;
     }
 
     user->mailbox->mails = malloc(MAX_MAILS * sizeof(mail));
@@ -306,11 +320,10 @@ unsigned int load_mailbox(user_data *user) {
             }
 
             snprintf(current_dir, PATH_MAX, "%s/%s", user_maildir, entry->d_name);
-            printf("Direc: %s\n", current_dir);
 
             DIR *subdir = opendir(current_dir);
             if (!subdir) {
-                perror("Error abriendo subdirectorio");
+                perror("[POP3] Error opening subdirectory");
                 continue;
             }
 
@@ -320,7 +333,6 @@ unsigned int load_mailbox(user_data *user) {
                     mail *mail = &user->mailbox->mails[count];
                     mail->filename = malloc(PATH_MAX);
                     snprintf(mail->filename, PATH_MAX, "%s/%s", current_dir, sub_entry->d_name);
-                    printf("Direc: %s\n", mail->filename);
 
                     mail->id = count + 1;
                     mail->size = get_file_size(mail->filename);
@@ -359,7 +371,7 @@ size_t get_file_size(const char *filename) {
     if (stat(filename, &st) == 0) {
         return st.st_size;
     } else {
-        perror("Error getting file size\n");  //TODO: manejo de errores
+        perror("[POP3] Error getting file size\n");
         return 0;
     }
 }
@@ -376,4 +388,118 @@ void free_mailbox(t_mailbox* mails) {
         }
         free(mails);
     }
+}
+
+user_data ** get_users(){
+    return server->users_list;
+}
+
+size_t get_users_amount(){
+    return server->user_amount;
+}
+
+unsigned char add_user(char * user_and_pass){
+    if(server->user_amount >= MAX_USERS) {
+        return FALSE;
+    } else {
+        if(user(user_and_pass)) {
+            char *path = malloc(PATH_MAX);
+            snprintf(path, PATH_MAX, "%s/%s", server->maildir, server->users_list[server->user_amount - 1]->name);
+            mkdir(path, 0777);
+            snprintf(path, PATH_MAX, "%s/%s/cur", server->maildir, server->users_list[server->user_amount - 1]->name);
+            mkdir(path, 0777);
+            snprintf(path, PATH_MAX, "%s/%s/new", server->maildir, server->users_list[server->user_amount - 1]->name);
+            mkdir(path, 0777);
+            snprintf(path, PATH_MAX, "%s/%s/tmp", server->maildir, server->users_list[server->user_amount - 1]->name);
+            mkdir(path, 0777);
+            free(path);
+            return TRUE;
+        }
+        return FALSE;
+    }
+}
+
+unsigned char delete_user(char * username){
+    for(int i = 0; i < server->user_amount; i++) {
+        if(strcmp(server->users_list[i]->name, username) == 0) {
+            if (server->users_list[i]->logged) {
+                server->users_list[i]->to_delete = TRUE;
+                return TRUE;
+            }
+            free_user_data(server->users_list[i]);
+            server->users_list[i] = server->users_list[server->user_amount - 1];
+            server->user_amount--;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+size_t get_historic_connections() {
+    return server->historic_connections;
+}
+
+
+unsigned int get_current_connections() {
+    int connections = 0;
+    for (int i=0; i < server->user_amount; i++) {
+        if (server->users_list[i]->logged) {
+            connections++;
+        }
+    }
+    return connections;
+}
+
+size_t get_bytes_transferred() {
+    return server->bytes_transferred;
+}
+
+
+void add_bytes_transferred(size_t bytes) {
+    server->bytes_transferred += bytes;
+}
+
+
+
+int transform_mail_piping(int mail_fd) {
+    if(server->transformation == NULL) {
+        set_transformation("/bin/cat");
+    }
+
+    int output_pipe[2];
+    if(pipe(output_pipe) == -1) {
+        printf("[POP3] Error creating output pipes\n");
+        return ERR;
+    }
+
+    pid_t PID = fork();
+
+    switch (PID) {
+        case -1:
+            printf("[POP3] Error creating child process\n");
+            return ERR;
+            break;
+        case 0:
+
+            dup2(mail_fd, STDIN_FILENO);
+            dup2(output_pipe[1], STDOUT_FILENO);
+
+            close(output_pipe[0]);
+
+            execlp(server->transformation, server->transformation, NULL);
+
+            break;
+        default:
+            close(output_pipe[1]);
+            break;
+    }
+    
+    return output_pipe[0];
+}
+
+size_t get_log_size() {
+    return server->log_size;
+}
+access_log ** get_access_log() {
+    return server->log;
 }

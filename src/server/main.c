@@ -27,13 +27,14 @@
 
 #include "../shared/include/buffer.h"
 #include "../shared/include/args.h"
-#include "../server/include/pop3.h"
+#include "../server/pop3/include/pop3.h"
+#include "manager/include/mgmt.h"
 
 static bool done = false;
 
 
 static void sigterm_handler(const int signal) {
-    printf("Signal %d, cleaning up and exiting\n",signal);
+    printf("[INFO] Signal %d, cleaning up and exiting\n",signal);
     done = true;
 }
 
@@ -80,6 +81,7 @@ static int setupSockAddr(char* addr, unsigned short port, void* res, socklen_t* 
 
 int main(const int argc,char **argv) {
     initialize_pop3_server();
+    initialize_mgmt_server();
     struct pop3args *pop3config = malloc(sizeof(struct pop3args));
 
     parse_args(argc,argv,pop3config);
@@ -109,7 +111,7 @@ int main(const int argc,char **argv) {
         goto finally;
     }
 
-    fprintf(stdout, "Listening on TCP port %d\n", pop3config->pop3_port);
+    fprintf(stdout, "[POP3] Listening on TCP port %d\n", pop3config->pop3_port);
 
     // man 7 ip. no importa reportar nada si falla.
     setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
@@ -168,7 +170,7 @@ int main(const int argc,char **argv) {
         goto finally;
     }
 
-    printf("Server listening\n");
+    printf("[POP3] Server listening\n");
 
     //MANAGE
     memset(&server_addr, 0, sizeof(server_addr));
@@ -184,44 +186,44 @@ int main(const int argc,char **argv) {
     setsockopt(mgmt_fd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
 
     if (bind(mgmt_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        err_msg = "unable to bind socket - management";
+        err_msg = "[MGMT] Unable to bind socket.";
         goto finally;
     }
 
     if (listen(mgmt_fd, 20) < 0) {
-        err_msg = "unable to listen - management";
+        err_msg = "[MGMT] Unable to listen.";
         goto finally;
     }
 
     if(selector_fd_set_nio(mgmt_fd) == -1) {
-        err_msg = "getting server socket flags";
+        err_msg = "[INFO] Getting server socket flags.";
         goto finally;
     }
 
     const struct fd_handler management = {
-            .handle_read       = NULL, //TODO: set to management_passive_accept
+            .handle_read       = mgmt_passive_accept,
             .handle_write      = NULL,
             .handle_close      = NULL, // nothing to free
     };
 
     // register as reader
-    ss = selector_register(selector, mgmt_fd, &management,OP_NOOP, NULL);
+    ss = selector_register(selector, mgmt_fd, &management,OP_READ, NULL);
     if(ss != SELECTOR_SUCCESS) {
-        err_msg = "registering fd";
+        err_msg = "[MGMT] Error registering fd.";
         goto finally;
     }
 
-    printf("Server listening - Management\n");
+    printf("[MGMT] Server listening\n");
 
     while(!done) {
         ss = selector_select(selector);
         if(ss != SELECTOR_SUCCESS) {
-            err_msg = "serving - Management";
+            err_msg = "[MGMT] Error serving.";
             goto finally;
         }
     }
 
-    printf("closing\n");
+    printf("[INFO] Closing\n");
 
     int ret = 0;
 
@@ -244,16 +246,17 @@ finally:
 
     if(server_fd >= 0) {
         close(server_fd);
-        printf("Servidor cerrado.\n");
+        printf("[POP3] Server closed.\n");
     }
 
     if(mgmt_fd >= 0) {
         close(mgmt_fd);
-        printf("Servidor de management cerrado.\n");
+        printf("[MGMT] Server closed.\n");
     }
 
     free(pop3config);
     free_pop3_server();
+    free_mgmt_server();
 
     return ret;
 

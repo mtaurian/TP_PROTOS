@@ -6,7 +6,9 @@
 #include <getopt.h>
 
 #include "include/args.h"
-#include "../server/include/pop3.h"
+
+#include "../server/manager/include/mgmt.h"
+#include "../server/pop3/include/pop3.h"
 
 
 static unsigned short
@@ -28,9 +30,26 @@ port(const char *s) {
 
 static void
 version(void) {
-    fprintf(stderr, "pop3 version 0.0\n"
-                    "ITBA Protocolos de Comunicación 2024/2 -- Grupo 9\n"
-                    "AQUI VA LA LICENCIA\n");
+    fprintf(stderr, "Version 1\n"
+                    "ITBA Protocolos de Comunicación 2024/2 -- Grupo 9\n\n\n"
+
+                    "MIT License\n\n"
+
+                    "Copyright © 2024 Diego Badín, Diego Rabinovich, Magdalena Taurian y Julieta Techenski\n\n"
+                    
+                    "Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated\n"
+                    "documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation\n"
+                    "the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and\n"
+                    "to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\n"
+                    
+                    "The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\n"
+                    
+                    "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING\n"
+                    "BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\n"
+                    "NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,\n"
+                    "DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\n"
+                    "FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"
+            );
 }
 
 /*
@@ -48,15 +67,16 @@ usage(const char *progname) {
     fprintf(stderr,
         "Usage: %s [OPTION]...\n"
         "\n"
-        "   -h               Imprime la ayuda y termina.\n"
-        "   -l <POP3 addr>   Dirección donde servirá el servidor POP3.\n"
-        "   -L <conf  addr>  Dirección donde servirá el servicio de management.\n"
-        "   -p <POP3 port>   Puerto entrante conexiones POP3.\n"
-        "   -P <conf port>   Puerto entrante conexiones configuracion\n"
-        "   -u <name>:<pass> Usuario y contraseña de usuario que puede usar el servidor. Hasta 10.\n"
-        "   -v               Imprime información sobre la versión versión y termina.\n"
-        "   -d <path>        Carpeta donde residen los Maildirs.\n"
-        "   -t <cmd>         Comando para aplicar transformaciones"
+        "   -h                         Imprime la ayuda y termina.\n"
+        "   -l <POP3 addr>             Dirección donde servirá el servidor POP3.\n"
+        "   -L <MGMT addr>             Dirección donde servirá el servicio de management.\n"
+        "   -p <POP3 port>             Puerto entrante conexiones POP3.\n"
+        "   -P <MGMT port>             Puerto entrante conexiones configuracion\n"
+        "   -u <user>:<password>       Usuario y contraseña de usuario que puede usar el servidor.\n"
+        "   -U <user>:<password>       Usuario y contraseña de usuario admin que puede usar el servicio de management.\n"
+        "   -v                         Imprime información sobre la versión versión y termina.\n"
+        "   -d <path>                  Carpeta donde residen los Maildirs.\n"
+        "   -t <cmd>                   Comando para aplicar transformaciones"
         "\n",
         progname);
     exit(1);
@@ -74,6 +94,7 @@ void parse_args(const int argc, char **argv, struct pop3args *args) {
 
     int c;
     int nusers = 0;
+    int nadmins = 0;
 
     while (true) {
         int option_index = 0;
@@ -81,7 +102,7 @@ void parse_args(const int argc, char **argv, struct pop3args *args) {
             { 0,           0,                 0, 0 }
         };
 
-        c = getopt_long(argc, argv, "hl:L:p:P:u:vd:t:", long_options, &option_index);
+        c = getopt_long(argc, argv, "hl:L:p:P:u:vd:t:U:", long_options, &option_index);
         if (c == -1)
             break;
 
@@ -106,8 +127,7 @@ void parse_args(const int argc, char **argv, struct pop3args *args) {
                     fprintf(stderr, "maximun number of command line users reached: %d.\n", MAX_USERS);
                     exit(1);
                 } else {
-                    user(optarg);
-                    nusers++;
+                    if(user(optarg)) nusers++;
                 }
                 break;
             case 'v':
@@ -118,7 +138,16 @@ void parse_args(const int argc, char **argv, struct pop3args *args) {
                 set_maildir(optarg);
                 break;
             case 't':
-                //TODO implementar
+                set_transformation(optarg);
+                break;
+            case 'U':
+                if(nadmins >= MAX_MGMT_USERS) {
+                    fprintf(stderr, "maximun number of command line users reached: %d.\n", MAX_USERS);
+                    exit(1);
+                } else {
+                    mgmt_user(optarg);
+                    nadmins++;
+                }
                 break;
             default:
                 fprintf(stderr, "unknown argument %d.\n", c);
