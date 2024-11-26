@@ -14,7 +14,7 @@ Luego, los archivos generados se encontrarán dentro del directorio `./bin`.
 ### Ejecución del Servidor
 Para ejecutar el servidor se debe correr los siguientes comandos dentro del directorio `bin`:
 ```bash
-./pop3 -d <maildir_path> -U <user>:<pass> [[-u <user>:<pass>]...] [OPTION]...
+./server -d <maildir_path> -U <user>:<pass> [[-u <user>:<pass>]...] [OPTION]...
 ```
 donde: 
 - `-h` imprime la ayuda y termina.
@@ -45,7 +45,7 @@ donde:
 - `-L` envia una solicitud para obtener los logs del servidor.
 
 ## Estructura del directorio de mails
-Los directorios de los usuarios deben estar dentro de la carpeta que se especifique con la opción `-d` al ejecutar `./pop3`.
+Los directorios de los usuarios deben estar dentro de la carpeta que se especifique con la opción `-d` al ejecutar `./server`.
 Dicho directorio debe contener únicamente directorios (los correspondientes a los usuarios). Asimismo, los directorios de los usuarios pueden contener solo tres directorios:
 - new: donde se encuentran los mails a leer. Si no se encuentra este directorio, se considera que no hay mails nuevos.
 - cur: donde se encuentran los mails eliminados. Si no se encuentra este directorio y se elimina un mail, se agrega.
