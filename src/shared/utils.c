@@ -61,7 +61,19 @@ commands findCommand(char *command) {
     return INVALID;
 }
 
-
+size_t length_until_newline(const char *str) {
+    if (str == NULL) {
+        return 0;
+    }
+    size_t length = 0;
+    while (str[length] != '\n' && str[length] != '\0') {
+        length++;
+    }
+    if (str[length] == '\n') {
+        length++;
+    }
+    return length;
+}
 user_request parse(struct selector_key * key) {
     printf("Parsing user request\n");
     user_request result = (struct user_request){ .is_valid = false, .command = INVALID};
@@ -73,15 +85,14 @@ user_request parse(struct selector_key * key) {
     size_t readable_bytes;
     uint8_t * read_ptr = buffer_read_ptr(&client_Data->clientBuffer, &readable_bytes);
 
-    for (size_t i = 0; i < readable_bytes; i++) {
-        printf("%c", read_ptr[i]);
-    }
-    printf("\n");
+    size_t token_len = length_until_newline((char *) read_ptr);
 
-    char *token = strtok((char * ) read_ptr, " \r\n");
-    size_t token_len = strlen(token) + 1;
+    char *token = strtok((char * ) read_ptr, "\n");
+    token = strtok(token, "\r");
+    token = strtok(token, " ");
 
-    if (token == NULL || token[0]=='\r' || token[0]=='\n') {
+
+    if (token == NULL) {
         buffer_read_adv(&client_Data->clientBuffer, token_len);
         return result;
     }
@@ -95,8 +106,7 @@ user_request parse(struct selector_key * key) {
 
     if (all_commands[result.command].has_params || result.command == LIST) {
         result.is_valid = true;
-        if((token = strtok(NULL, "\n")) != NULL) {
-            printf("token: %s\n", token);
+        if((token = strtok(NULL, "\0")) != NULL) {
             strcpy(result.arg, token);
         }
         if (result.arg[0] =='\0' && result.command !=LIST ) {
@@ -104,17 +114,8 @@ user_request parse(struct selector_key * key) {
         }
     }
 
-    size_t amount_to_advance;
-    if(result.arg == NULL){
-        amount_to_advance = token_len;
-    } else {
-        amount_to_advance = token_len + strlen(result.arg) + 1;
-    }
-    printf("amount to advance: %ld\n", amount_to_advance);
-    printf("readable_bytes: %ld\n", readable_bytes);
-
-    buffer_read_adv(&client_Data->clientBuffer, amount_to_advance);
-    buffer_clean(read_ptr, amount_to_advance);
+    buffer_read_adv(&client_Data->clientBuffer, token_len);
+    buffer_clean(read_ptr, token_len);
     return result;
 }
 
