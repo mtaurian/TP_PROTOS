@@ -110,4 +110,7 @@ size_t get_log_size();
 
 // could be in a utils file
 size_t get_file_size(const char *filename);
+
+int transform_mail_piping(int mail_fd);
+
 #endif //POP3_H

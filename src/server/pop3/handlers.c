@@ -128,7 +128,8 @@ void handle_retr(struct selector_key *key, char *mail_number) {
 					response_len = strlen(response);
 
 					ssize_t bytes_read;
-					while ((bytes_read = read(mail->fd, buffer, BUFFER_SIZE)) > 0) {
+                    int transformation_fd = transform_mail_piping(mail->fd);
+					while ((bytes_read = read(transformation_fd, buffer, BUFFER_SIZE)) > 0) {
 						buffer[bytes_read] = '\0';
 						if (response_len + bytes_read + 1 > BUFFER_SIZE) {
 							response = realloc(response, response_len + bytes_read + 1);
