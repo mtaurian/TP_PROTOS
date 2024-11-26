@@ -9,6 +9,7 @@ void transaction_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int transaction_on_ready_to_read(struct selector_key *key){
+    printf("in transaction_on_ready_to_read\n");
   	user_request entry = parse(key);
   	int ret = TRANSACTION;
     
@@ -49,5 +50,11 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
 }
 
 unsigned int transaction_on_ready_to_write(struct selector_key *key){
-  	return ATTACHMENT(key)->stm.current->state;
+  	client_data *clientData = ATTACHMENT(key);
+    if(buffer_can_read(&clientData->clientBuffer)){
+        selector_set_interest(key->s, key->fd, OP_READ);
+        return transaction_on_ready_to_read(key);
+    }
+
+    return TRANSACTION;
 }
