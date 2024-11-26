@@ -23,6 +23,7 @@ int conectToServer(struct clientArgs * client_args) {
     struct addrinfo* servAddr;
     int rtnVal = getaddrinfo(client_args->client_addr, client_args->client_port, &addrCriteria, &servAddr);
     if (rtnVal != 0) {
+        free(client_args);
         return -1;
     }
     int sock = -1;
@@ -32,6 +33,7 @@ int conectToServer(struct clientArgs * client_args) {
             errno = 0;
             if (connect(sock, addr->ai_addr, addr->ai_addrlen) != 0) {
                 close(sock);
+                free(client_args);
                 sock = -1;
             }
         }
