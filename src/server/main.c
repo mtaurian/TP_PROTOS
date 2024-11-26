@@ -31,6 +31,7 @@
 #include "manager/include/mgmt.h"
 
 static bool done = false;
+static int ipv6;
 
 
 static void sigterm_handler(const int signal) {
@@ -43,7 +44,7 @@ static void sigterm_handler(const int signal) {
  *   With mini modifications (log -> perror)
  */
 static int setupSockAddr(char* addr, unsigned short port, void* res, socklen_t* socklenResult) {
-    int ipv6 = strchr(addr, ':') != NULL;
+    ipv6 = strchr(addr, ':') != NULL;
 
     if (ipv6) {
         // Parse addr as IPv6
@@ -84,6 +85,11 @@ int main(const int argc,char **argv) {
     initialize_mgmt_server();
     struct pop3args *pop3config = malloc(sizeof(struct pop3args));
 
+    // Configuration of POP3 server
+
+    struct sockaddr_storage server_addr;
+    socklen_t server_addr_len = sizeof(server_addr);
+
     parse_args(argc,argv,pop3config);
     close(0);
     const char *err_msg       = NULL;
@@ -91,25 +97,23 @@ int main(const int argc,char **argv) {
     selector_status   ss      = SELECTOR_SUCCESS;
     fd_selector selector      = NULL;
 
-    int server_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    int mgmt_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (server_fd < 0) {
-        err_msg = "unable to create socket";
-        goto finally;
-    }
-    if (mgmt_fd < 0) {
-        err_msg = "unable to create socket - management";
-        goto finally;
-    }
 
-    // Configuration of POP3 server
-    struct sockaddr_in server_addr;
-    socklen_t server_addr_len = sizeof(server_addr);
+
+
 
     if (setupSockAddr(pop3config->pop3_addr, pop3config->pop3_port, &server_addr, &server_addr_len)) {
         err_msg = "Failed to setup server address";
         goto finally;
     }
+
+
+    int server_fd = socket(server_addr.ss_family,SOCK_STREAM, IPPROTO_TCP);
+
+    if (server_fd < 0) {
+        err_msg = "unable to create socket";
+        goto finally;
+    }
+
 
     fprintf(stdout, "[POP3] Listening on TCP port %d\n", pop3config->pop3_port);
 
@@ -173,11 +177,22 @@ int main(const int argc,char **argv) {
     printf("[POP3] Server listening\n");
 
     //MANAGE
+
+
+
+
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr_len = sizeof(server_addr);
 
     if (setupSockAddr(pop3config->mng_addr, pop3config->mng_port, &server_addr, &server_addr_len)) {
         err_msg = "Failed to setup server address";
+        goto finally;
+    }
+
+
+    int mgmt_fd = socket(server_addr.ss_family, SOCK_STREAM, IPPROTO_TCP);
+    if (mgmt_fd < 0) {
+        err_msg = "unable to create socket - management";
         goto finally;
     }
 
