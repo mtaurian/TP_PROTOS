@@ -75,7 +75,6 @@ size_t length_until_newline(const char *str,size_t lengthStr) {
     return length;
 }
 user_request parse(struct selector_key * key) {
-    printf("Parsing user request\n");
     user_request result = (struct user_request){ .is_valid = false, .command = INVALID};
     struct client_data * client_Data = ATTACHMENT(key);
     if(!buffer_can_read(&client_Data->clientBuffer)){
