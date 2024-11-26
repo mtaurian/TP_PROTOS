@@ -2,6 +2,8 @@
 
 #include <time.h>
 
+#include "../pop3/include/handlers.h"
+
 boolean handle_login(struct selector_key *key, char *arg){
     client_data *clientData = ATTACHMENT(key);
     char * username = strtok(arg, ":");
@@ -71,18 +73,22 @@ boolean handle_metrics(struct selector_key * key){
 }
 
 
-unsigned int handle_access_log(struct selector_key *key) {
+boolean handle_access_log(struct selector_key *key) {
     access_log **log = get_access_log();
     size_t log_entry_size = MAX_RESPONSE;
     char *log_entry = malloc(log_entry_size);
     if (log_entry == NULL) {
         return FALSE;
     }
+    log_entry[0] = '\0'; // Initialize the buffer
 
     for(int i = 0; i < get_log_size(); i++) {
-        size_t required_size = strlen(log_entry) + MAX_RESPONSE;
+        char time_buffer[20];
+        strftime(time_buffer, sizeof(time_buffer), "%Y-%m-%d %H:%M:%S", localtime(&log[i]->access_time));
+
+        size_t required_size = strlen(log_entry) + strlen(time_buffer) + strlen(log[i]->user->name) + 10;
         if (required_size > log_entry_size) {
-            log_entry_size = required_size;
+            log_entry_size = required_size + MAX_RESPONSE_SIZE;
             char *temp = realloc(log_entry, log_entry_size);
             if (temp == NULL) {
                 free(log_entry);
@@ -91,8 +97,7 @@ unsigned int handle_access_log(struct selector_key *key) {
             log_entry = temp;
         }
 
-        strftime(log_entry, MAX_RESPONSE, "%Y-%m-%d %H:%M:%S", localtime(&log[i]->access_time));
-        snprintf(log_entry, MAX_RESPONSE, " %s %s\n", log[i]->user->name, log[i]->type ? "LOGIN" : "LOGOUT");
+        snprintf(log_entry, log_entry_size + MAX_RESPONSE_SIZE, "%s %s %s %s\n", log_entry, time_buffer, log[i]->user->name, log[i]->type ? "LOGIN" : "LOGOUT");
     }
     write_std_response(OK, log_entry, key);
     free(log_entry);

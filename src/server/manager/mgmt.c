@@ -158,6 +158,9 @@ void mgmt_user(const char *s) {
 super_user_data * validate_admin(const char *name, const char *pass){
     for(int i = 0; i < mgmt_server->admin_amount; i++) {
         super_user_data *user = &mgmt_server->users_list[i];
+        if(user->name == NULL || user->pass == NULL) {
+            return NULL;
+        }
         if(strcmp(user->name, name) == 0 && strcmp(user->pass, pass) == 0) {
             return &mgmt_server->users_list[i];
         }

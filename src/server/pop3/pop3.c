@@ -63,6 +63,7 @@ void initialize_pop3_server() {
 
     server->historic_connections = 0;
     server->log = NULL;
+    server->log = malloc(INITIAL_ACCESS_SIZE*sizeof(access_log*));
     server->log_size = 0;
 }
 
@@ -78,6 +79,7 @@ void free_pop3_server() {
     for (int i = 0; i < server->log_size; i++) {
         free(server->log[i]);
     }
+    free(server->log);
 
     free(server);
 }
@@ -233,6 +235,16 @@ void set_transformation(const char *transformation) {
 
 void new_access_log(user_data* user, access_type access_type) {
     server->log_size++;
+
+    if(sizeof(server->log) == server->log_size) {
+        access_log ** temp = server->log;
+        server->log = realloc(server->log, INITIAL_ACCESS_SIZE*sizeof(access_log*));
+        if(server->log == NULL) {
+            server->log = temp;
+            return;
+        }
+    }
+
     server->log[server->log_size-1] = malloc(sizeof(access_log));
     server->log[server->log_size-1]->access_time = time(NULL);
     server->log[server->log_size-1]->type = access_type;

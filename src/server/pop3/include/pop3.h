@@ -23,7 +23,7 @@
 #define MAILDIR_PERMISSIONS 0777
 #define DIR_AMOUNT 3
 #define MAX_USERS 505
-
+#define INITIAL_ACCESS_SIZE 60
 
 typedef struct mail {
     int id;
