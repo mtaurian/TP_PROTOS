@@ -130,7 +130,7 @@ void pop3_passive_accept(struct selector_key *_key) {
     stm_init(&clientData->stm);
     ss = selector_register(_key->s, client_fd, &client_handler, OP_WRITE, clientData);
     if (ss != SELECTOR_SUCCESS) {
-        err_msg = "Unable to register client socket handler";
+        err_msg = "[POP3] Unable to register client socket handler";
     }
 
     //manager metrics
