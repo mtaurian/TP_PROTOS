@@ -41,5 +41,11 @@ unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
 }
 
 unsigned int auth_pass_on_ready_to_write(struct selector_key *key){
-    return ATTACHMENT(key)->stm.current->state;
+    client_data *clientData = ATTACHMENT(key);
+    if(buffer_can_read(&clientData->clientBuffer)){
+        selector_set_interest(key->s, key->fd, OP_READ);
+        return auth_pass_on_ready_to_read(key);
+    }
+
+    return AUTHORIZATION_PASSWORD;
 }

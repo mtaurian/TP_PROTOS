@@ -63,6 +63,7 @@ commands findCommand(char *command) {
 
 
 user_request parse(struct selector_key * key) {
+    printf("Parsing user request\n");
     user_request result = (struct user_request){ .is_valid = false, .command = INVALID};
     struct client_data * client_Data = ATTACHMENT(key);
     if(!buffer_can_read(&client_Data->clientBuffer)){
@@ -71,23 +72,31 @@ user_request parse(struct selector_key * key) {
 
     size_t readable_bytes;
     uint8_t * read_ptr = buffer_read_ptr(&client_Data->clientBuffer, &readable_bytes);
+
+    for (size_t i = 0; i < readable_bytes; i++) {
+        printf("%c", read_ptr[i]);
+    }
+    printf("\n");
+
     char *token = strtok((char * ) read_ptr, " \r\n");
+    size_t token_len = strlen(token) + 1;
 
     if (token == NULL || token[0]=='\r' || token[0]=='\n') {
-        buffer_read_adv(&client_Data->clientBuffer, readable_bytes);
+        buffer_read_adv(&client_Data->clientBuffer, token_len);
         return result;
     }
 
     result.command = findCommand(token);
 
     if (result.command  == INVALID) {
-        buffer_read_adv(&client_Data->clientBuffer, readable_bytes);
+        buffer_read_adv(&client_Data->clientBuffer, token_len);
         return result;
     }
 
     if (all_commands[result.command].has_params || result.command == LIST) {
         result.is_valid = true;
-        if((token = strtok(NULL, "\r\n\0")) != NULL) {
+        if((token = strtok(NULL, "\n")) != NULL) {
+            printf("token: %s\n", token);
             strcpy(result.arg, token);
         }
         if (result.arg[0] =='\0' && result.command !=LIST ) {
@@ -95,8 +104,17 @@ user_request parse(struct selector_key * key) {
         }
     }
 
-    buffer_read_adv(&client_Data->clientBuffer, readable_bytes);
-    buffer_clean(read_ptr,readable_bytes);
+    size_t amount_to_advance;
+    if(result.arg == NULL){
+        amount_to_advance = token_len;
+    } else {
+        amount_to_advance = token_len + strlen(result.arg) + 1;
+    }
+    printf("amount to advance: %ld\n", amount_to_advance);
+    printf("readable_bytes: %ld\n", readable_bytes);
+
+    buffer_read_adv(&client_Data->clientBuffer, amount_to_advance);
+    buffer_clean(read_ptr, amount_to_advance);
     return result;
 }
 
@@ -194,7 +212,7 @@ void write_handler(struct selector_key *_key) {
     if (err_msg) {
         perror(err_msg);
     } else {
-        selector_set_interest_key(_key, OP_READ);
+        selector_set_interest_key(_key, OP_READ | OP_WRITE);
     }
 }
 
