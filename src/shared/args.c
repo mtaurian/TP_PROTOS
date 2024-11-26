@@ -30,7 +30,7 @@ port(const char *s) {
 
 static void
 version(void) {
-    fprintf(stderr, "Version: 1.0\n"
+    fprintf(stderr, "Version 1\n"
                     "ITBA Protocolos de Comunicación 2024/2 -- Grupo 9\n\n\n"
 
                     "MIT License\n\n"
