@@ -73,11 +73,11 @@ void free_pop3_server() {
         free_user_data(server->users_list[i]);
     }
 
-    if(server->maildir) {
+    if(server->maildir != NULL) {
         free(server->maildir);
     }
 
-    if(server->transformation) {
+    if(server->transformation != NULL) {
         free(server->transformation);
     }
 

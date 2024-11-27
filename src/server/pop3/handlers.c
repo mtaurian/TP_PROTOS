@@ -214,16 +214,31 @@ void handle_dele(struct selector_key *key, char * mail_number){
     mailbox->mails_size -= mailbox->mails[mail_id - 1].size;
     mailbox->mail_count--;
     mailbox->deleted_count++;
+
+
+	// Move message to cur folder
+	char *filename = mailbox->mails[mail_id - 1].filename;
+	char *new_filename = malloc(strlen(filename) + 5);
+	strcpy(new_filename, filename);
+
+	char *dir = strrchr(new_filename, '/'); // * to last '/'
+	if (dir != NULL) {
+		if (strstr(dir, "/new/") != NULL) {
+			strcpy(dir + 1, "cur/");
+		} else if (strstr(dir, "/tmp/") != NULL) {
+			strcpy(dir + 1, "cur/");
+		}
+		rename(filename, new_filename);
+	}
+	mailbox->mails[mail_id - 1].filename = new_filename;
     
 	write_ok_message(key, MARKED_TO_BE_DELETED);
-  	return;
 }
 
 void handle_rset(struct selector_key *key){
   	client_data * clientData = ATTACHMENT(key);
 	t_mailbox * mailbox = clientData->user->mailbox;
 
-    int rset_amount = 0;
     for(int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++){
 		if(mailbox->mails[i].deleted){
       		mailbox->mails[i].deleted = FALSE;
@@ -233,7 +248,6 @@ void handle_rset(struct selector_key *key){
         }
 	}
     write_ok_message(key, JUST_OK);
-    return;
 }
 
 void handle_update_quit(struct selector_key *key){
