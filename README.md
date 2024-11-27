@@ -90,6 +90,8 @@ TP_PROTOS
     - `pop3` ontiene el código relacionada a la aplicación que implementa el protocolo POP3.
 - `shared` contiene el buffer de escritura/lectura provisto por la cátedra, el parser de comandos del servidor y distintas funciones útiles que se utilizan en los otros directorios.
 
+## Limpieza del proyecto
+Para limpiar los archivos generados, ejecutar el comando `make clean`.
 
 ## Autores: 
 
