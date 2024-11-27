@@ -1,7 +1,7 @@
 #include "include/handlers.h"
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <sys/stat.h>
 
 int handle_user(struct selector_key *key, char * username){
     client_data * clientData = ATTACHMENT(key);
@@ -200,7 +200,7 @@ void handle_dele(struct selector_key *key, char * mail_number){
         return;
     }
 
-    if(mail_id > mailbox->mail_count){
+    if(mail_id > mailbox->mail_count + mailbox->deleted_count){
         write_error_message_with_arg(key, NO_MESSAGE, endptr);
         return;
     }
@@ -210,29 +210,50 @@ void handle_dele(struct selector_key *key, char * mail_number){
 		return;
 	}
 
+	// Move message to cur folder
+    char *oldPath = mailbox->mails[mail_id - 1].filename;
+    char * filename = strrchr(oldPath, '/');
+    char * tmpPath = malloc(strlen(oldPath) + 1);
+    char * newPath = malloc(strlen(oldPath) + 2);
+    strcpy(tmpPath, oldPath);
+
+    char *lastSlash = strrchr(tmpPath, '/');
+    if (lastSlash != NULL) {
+        *(lastSlash) = '\0';
+
+    } else {
+        write_error_message(key, INTERNAL_ERROR);
+        free(tmpPath);
+        free(oldPath);
+        return;
+    }
+
+    char *secondLastSlash = strrchr(tmpPath, '/');
+    if (secondLastSlash != NULL) {
+        *secondLastSlash = '\0';
+    }
+
+    snprintf(newPath, strlen(oldPath) + 2, "%s/cur/%s", tmpPath, filename);
+    char  * maildir = get_maildir();
+    char * user_maildir = malloc(strlen(maildir)+strlen(clientData->username)+2+4);
+    sprintf(user_maildir, "%s/%s/cur", maildir, clientData->username);
+    mkdir(user_maildir, 0777); //if it already exits does not matter
+    free(user_maildir);
+
+    mailbox->mails[mail_id - 1].filename = newPath;
+    if (rename(oldPath, newPath) != 0) {
+        write_error_message(key, INTERNAL_ERROR);
+        free(tmpPath);
+        free(oldPath);
+        return;
+    }
     mailbox->mails[mail_id - 1].deleted = TRUE;
     mailbox->mails_size -= mailbox->mails[mail_id - 1].size;
     mailbox->mail_count--;
     mailbox->deleted_count++;
-
-
-	// Move message to cur folder
-	char *filename = mailbox->mails[mail_id - 1].filename;
-	char *new_filename = malloc(strlen(filename) + 5);
-	strcpy(new_filename, filename);
-
-	char *dir = strrchr(new_filename, '/'); // * to last '/'
-	if (dir != NULL) {
-		if (strstr(dir, "/new/") != NULL) {
-			strcpy(dir + 1, "cur/");
-		} else if (strstr(dir, "/tmp/") != NULL) {
-			strcpy(dir + 1, "cur/");
-		}
-		rename(filename, new_filename);
-	}
-	mailbox->mails[mail_id - 1].filename = new_filename;
-    
-	write_ok_message(key, MARKED_TO_BE_DELETED);
+    write_ok_message(key, MARKED_TO_BE_DELETED);
+    free(tmpPath);
+    free(oldPath);
 }
 
 void handle_rset(struct selector_key *key){

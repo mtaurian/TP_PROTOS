@@ -496,3 +496,7 @@ size_t get_log_size() {
 access_log ** get_access_log() {
     return server->log;
 }
+
+char * get_maildir(){
+    return server->maildir;
+}

@@ -93,7 +93,7 @@ void set_transformation(const char *transformation);
 
 unsigned int load_mailbox(user_data *user);
 void free_mailbox(t_mailbox* mails);
-
+char * get_maildir();
 
 // for management server
 unsigned int get_current_connections();
