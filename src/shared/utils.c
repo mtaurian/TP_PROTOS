@@ -45,6 +45,7 @@ struct complete_ok oks_list[] = {
     { .type = LOGOUT_OUT_MESSAGES_DELETED,  .message = "Logging out, messages deleted." },
     { .type = USER_ADDED,                   .message = "User added successfully."       },
     { .type = USER_DELETED,                 .message = "User deleted successfully."     },
+    { .type = NO_LOGS,                      .message = "No logs available."             },
     { .type = JUST_OK,                      .message = NULL                             }
 };
 

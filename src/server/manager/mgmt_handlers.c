@@ -76,7 +76,7 @@ boolean handle_access_log(struct selector_key *key) {
     access_log **logs = get_access_log();
     size_t log_count = get_log_size();
     if (logs == NULL || log_count == 0) {
-        write_std_response(OK, "No logs available.\n", key);
+        write_ok_message(key, NO_LOGS);
         return TRUE;
     }
 
@@ -101,7 +101,7 @@ boolean handle_access_log(struct selector_key *key) {
         snprintf(entry, sizeof(entry), "%s %-20s %-20s\n",
                  time_buffer, log->user->name, log->type ? "LOGIN" : "LOGOUT");
 
-        size_t required_size = strlen(log_buffer) + strlen(entry) + 1; // +1 para el terminador nulo
+        size_t required_size = strlen(log_buffer) + strlen(entry) + 1; // +1 for null terminator
         if (required_size > buffer_size) {
             buffer_size = required_size + MAX_RESPONSE_SIZE;
             char *temp = realloc(log_buffer, buffer_size);
@@ -114,6 +114,7 @@ boolean handle_access_log(struct selector_key *key) {
 
         strcat(log_buffer, entry);
     }
+
 
     write_std_response(OK, log_buffer, key);
     free(log_buffer);

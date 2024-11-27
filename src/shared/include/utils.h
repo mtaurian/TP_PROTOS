@@ -87,6 +87,7 @@ typedef enum oks {
     LOGOUT_OUT_MESSAGES_DELETED,
     USER_ADDED,
     USER_DELETED,
+    NO_LOGS,
     JUST_OK
 } oks;
 
