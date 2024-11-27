@@ -50,8 +50,8 @@ static const struct state_definition states[] = {
         .state            = UPDATE,
         .on_arrival       = update_on_arrival,
         .on_departure     = NULL,
-        .on_read_ready    = NULL,
-        .on_write_ready   = NULL,
+        .on_read_ready    = update_on_ready_to_read,
+        .on_write_ready   = update_on_ready_to_write,
     }
 };
 
@@ -129,6 +129,7 @@ void pop3_passive_accept(struct selector_key *_key) {
     }
 
     clientData->closed = false;
+    clientData->readyToLogout = false;
     clientData->clientFd = client_fd;
     clientData->clientAddress = client_addr;
     clientData->username = NULL;
@@ -187,6 +188,8 @@ void close_client(struct selector_key * _key) {
     free(data->password);
     free(data->username);
     free(data);
+
+    printf("[POP3] Client closed connection.\n");
 }
 
 unsigned char validate_user_not_exists(char * username){

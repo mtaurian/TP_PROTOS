@@ -9,9 +9,10 @@ void transaction_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int transaction_on_ready_to_read(struct selector_key *key){
-    printf("in transaction_on_ready_to_read\n");
-  	user_request entry = parse(key);
+    client_data *clientData = ATTACHMENT(key);
   	int ret = TRANSACTION;
+
+  	user_request entry = parse(key);
     
 	if(entry.command == INVALID){
         write_error_message(key, UNKNOWN_COMMAND);
@@ -39,6 +40,7 @@ unsigned int transaction_on_ready_to_read(struct selector_key *key){
       		handle_rset(key);
       		break;
     	case QUIT:
+            handle_quit(key);
             ret = UPDATE;
       		break;
     	default:

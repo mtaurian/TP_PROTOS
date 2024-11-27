@@ -39,6 +39,7 @@ typedef struct user_request {
 
 typedef struct client_data {
     struct sockaddr_storage clientAddress;
+    bool readyToLogout;
     bool closed;
     int clientFd;
 

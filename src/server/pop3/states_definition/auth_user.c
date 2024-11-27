@@ -11,9 +11,15 @@ void auth_user_on_departure(const unsigned state, struct selector_key *key){
 
 unsigned int auth_user_on_ready_to_read(struct selector_key *key){
     client_data *clientData = ATTACHMENT(key);
+    int ret = AUTHORIZATION_USER;
+
+    if(clientData->readyToLogout && !buffer_can_read(&clientData->responseBuffer)){
+        close_client(key);
+        return ret;
+    }
+
     user_request entry = parse(key);
 
-    int ret = AUTHORIZATION_USER;
 
     if(entry.command == INVALID){
         write_error_message(key, UNKNOWN_COMMAND);

@@ -15,7 +15,8 @@ int handle_user(struct selector_key *key, char * username){
 }
 
 void handle_quit(struct selector_key *key){
-    close_client(key);
+    client_data * clientData = ATTACHMENT(key);
+    clientData->readyToLogout = TRUE;
 }
 
 int handle_pass(struct selector_key *key, char * password){
@@ -252,5 +253,4 @@ void handle_update_quit(struct selector_key *key){
     } else {
         write_ok_message(key, LOGOUT_OUT);
     }
-    handle_quit(key);
 }
