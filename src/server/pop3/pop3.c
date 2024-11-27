@@ -205,7 +205,7 @@ unsigned char user(char *s) {
     char *p = strchr(s, ':');
     if(p == NULL) {
         fprintf(stderr, "password not found\n");
-        exit(1);
+        return 0;
     } else {
         *p = 0;
         p++;

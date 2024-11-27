@@ -136,7 +136,7 @@ void mgmt_user(const char *s) {
     char *p = strchr(s, ':');
     if(p == NULL) {
         fprintf(stderr, "password not found\n");
-        exit(1);
+        return;
     } else {
         *p = 0;
         p++;
