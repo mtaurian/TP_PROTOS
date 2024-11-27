@@ -113,6 +113,12 @@ int main(const int argc,char **argv) {
     int sock = conectToServer(clientArguments);
     if (sock < 0) {
         perror("[MGMT] socket() failed");
+        free(clientArguments);
+        return -1;
+    }
+    if(argc < 2){
+        printf("Missing arguments.\nTry './manager_client -h' for more information.\n");
+        free(clientArguments);
         return -1;
     }
     if(!authenticate(clientArguments->usernameAndPassword, sock) || send_command(clientArguments, sock) ) {
