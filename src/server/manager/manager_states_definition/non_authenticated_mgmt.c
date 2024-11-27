@@ -11,8 +11,14 @@ void non_authenticated_on_departure(const unsigned state, struct selector_key *k
 }
 
 unsigned int non_authenticated_on_read_ready(struct selector_key *key) {
+    client_data *clientData = ATTACHMENT(key);
+    int ret = AUTHENTICATED;
+    if(clientData->readyToLogout && !buffer_can_read(&clientData->responseBuffer)){
+        close_client(key);
+        return ret;
+    }
     user_request entry = parse(key);
-    int ret = NON_AUTHENTICATED;
+
     if ( entry.command == INVALID) {
         write_error_message(key, UNKNOWN_COMMAND);
         return ret;
