@@ -1,4 +1,5 @@
 #include "include/authenticated_mgmt.h"
+#include "../../pop3/include/handlers.h"
 
 void authenticated_on_arrival(const unsigned state, struct selector_key *key) {
     printf("[MGMT] Entered in AUTHENTICATED state\n");
@@ -9,8 +10,14 @@ void authenticated_on_departure(const unsigned state, struct selector_key *key) 
 }
 
 unsigned int authenticated_on_read_ready(struct selector_key *key){
-    user_request entry = parse(key);
+    client_data *clientData = ATTACHMENT(key);
     int ret = AUTHENTICATED;
+    if(clientData->readyToLogout && !buffer_can_read(&clientData->responseBuffer)){
+        close_client(key);
+        return ret;
+    }
+
+    user_request entry = parse(key);
     if (entry.command == INVALID) {
         write_error_message(key, UNKNOWN_COMMAND);
         return ret;
@@ -41,6 +48,10 @@ unsigned int authenticated_on_read_ready(struct selector_key *key){
             if (!handle_access_log(key)){
                 write_error_message(key, INTERNAL_ERROR);
             }
+            break;
+        case QUIT:
+            write_ok_message(key, LOGOUT_OUT);
+            handle_quit(key);
             break;
         default:
             write_error_message(key, UNKNOWN_COMMAND);

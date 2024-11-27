@@ -50,8 +50,8 @@ static const struct state_definition states[] = {
         .state            = UPDATE,
         .on_arrival       = update_on_arrival,
         .on_departure     = NULL,
-        .on_read_ready    = NULL,
-        .on_write_ready   = NULL,
+        .on_read_ready    = update_on_ready_to_read,
+        .on_write_ready   = update_on_ready_to_write,
     }
 };
 
@@ -73,11 +73,11 @@ void free_pop3_server() {
         free_user_data(server->users_list[i]);
     }
 
-    if(server->maildir) {
+    if(server->maildir != NULL) {
         free(server->maildir);
     }
 
-    if(server->transformation) {
+    if(server->transformation != NULL) {
         free(server->transformation);
     }
 
@@ -91,14 +91,14 @@ void free_pop3_server() {
 }
 
 void free_user_data(user_data *user) {
-    if (user->name) {
-        free(user->name);
+    if (user->name != NULL) {
+        free(user->name );
     }
-    if (user->pass) {
+    if (user->pass!= NULL) {
         free(user->pass);
     }
 
-    if (user->logged && user->mailbox) {
+    if (user->logged && user->mailbox != NULL) {
         free_mailbox(user->mailbox);
         user->mailbox = NULL;
     }
@@ -129,6 +129,7 @@ void pop3_passive_accept(struct selector_key *_key) {
     }
 
     clientData->closed = false;
+    clientData->readyToLogout = false;
     clientData->clientFd = client_fd;
     clientData->clientAddress = client_addr;
     clientData->username = NULL;
@@ -187,6 +188,8 @@ void close_client(struct selector_key * _key) {
     free(data->password);
     free(data->username);
     free(data);
+
+    printf("[POP3] Client closed connection.\n");
 }
 
 unsigned char validate_user_not_exists(char * username){
@@ -202,7 +205,7 @@ unsigned char user(char *s) {
     char *p = strchr(s, ':');
     if(p == NULL) {
         fprintf(stderr, "password not found\n");
-        exit(1);
+        return 0;
     } else {
         *p = 0;
         p++;
@@ -294,7 +297,11 @@ user_data *validate_user(char *username, char *password) {
 
 unsigned int load_mailbox(user_data *user) {
     char *user_maildir = malloc(PATH_MAX);
-    snprintf(user_maildir, PATH_MAX, "%s/%s",server->maildir, user->name);
+    if(!user_maildir) {
+        printf("[POP3] Error allocating memory for Maildir.\n");
+        return 0;
+    }
+    snprintf(user_maildir, PATH_MAX, "%s/%s", server->maildir, user->name);
 
     DIR *dir = opendir(user_maildir);
     if (!dir) {
@@ -304,66 +311,72 @@ unsigned int load_mailbox(user_data *user) {
     }
 
     user->mailbox->mails = malloc(MAX_MAILS * sizeof(mail));
+    if(!user->mailbox->mails) {
+        printf("[POP3] Error allocating memory for mails.\n");
+        free(user_maildir);
+        closedir(dir);
+        return 0;
+    }
 
-    char *current_dir = malloc(PATH_MAX);
-    snprintf(current_dir, PATH_MAX, "%s", user_maildir);
+    char * new_dir = malloc(PATH_MAX);
+    if(!new_dir) {
+        printf("[POP3] Error allocating memory for 'new' directory.\n");
+        free(user_maildir);
+        closedir(dir);
+        return 0;
+
+    }
+    snprintf(new_dir, PATH_MAX, "%s/new", user_maildir);
+
+    DIR *subdir = opendir(new_dir);
+    if (!subdir) {
+        printf("[POP3] No new mails.\n");
+        free(new_dir);
+        free(user_maildir);
+        closedir(dir);
+        return 0;
+    }
 
     struct dirent *entry;
     int count = 0;
     size_t total_size = 0;
 
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR) {
-            // Ignore `.` y `..`
-            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
-                continue;
+    while ((entry = readdir(subdir)) != NULL && count < MAX_MAILS) {
+        if (entry->d_type == DT_REG) {
+            mail *mail = &user->mailbox->mails[count];
+            mail->filename = malloc(PATH_MAX);
+            snprintf(mail->filename, PATH_MAX, "%s/%s", new_dir, entry->d_name);
+
+            mail->id = count + 1;
+            mail->size = get_file_size(mail->filename);
+            mail->deleted = 0;
+            mail->fd = -1;
+
+            if (!mail->filename || mail->size == 0) {
+                perror("[POP3] Error processing file");
+                closedir(subdir);
+                closedir(dir);
+                free(new_dir);
+                free(user_maildir);
+                return 0;
             }
 
-            snprintf(current_dir, PATH_MAX, "%s/%s", user_maildir, entry->d_name);
-
-            DIR *subdir = opendir(current_dir);
-            if (!subdir) {
-                perror("[POP3] Error opening subdirectory");
-                continue;
-            }
-
-            struct dirent *sub_entry;
-            while ((sub_entry = readdir(subdir)) != NULL && count < MAX_MAILS) {
-                if (sub_entry->d_type == DT_REG) {
-                    mail *mail = &user->mailbox->mails[count];
-                    mail->filename = malloc(PATH_MAX);
-                    snprintf(mail->filename, PATH_MAX, "%s/%s", current_dir, sub_entry->d_name);
-
-                    mail->id = count + 1;
-                    mail->size = get_file_size(mail->filename);
-                    mail->deleted = 0;
-                    mail->fd = -1;
-
-                    if (!mail->filename || mail->size == 0) {
-                        closedir(subdir);
-                        free(user_maildir);
-                        free(current_dir);
-                        return 0;
-                    }
-
-                    total_size += mail->size;
-                    count++;
-                }
-            }
-
-            closedir(subdir);
+            total_size += mail->size;
+            count++;
         }
     }
 
+    closedir(subdir);
     closedir(dir);
+
     user->mailbox->mail_count = count;
     user->mailbox->mails_size = total_size;
+
+    free(new_dir);
     free(user_maildir);
-    free(current_dir);
-
     return 1;
-
 }
+
 
 size_t get_file_size(const char *filename) {
     struct stat st;
@@ -403,16 +416,6 @@ unsigned char add_user(char * user_and_pass){
         return FALSE;
     } else {
         if(user(user_and_pass)) {
-            char *path = malloc(PATH_MAX);
-            snprintf(path, PATH_MAX, "%s/%s", server->maildir, server->users_list[server->user_amount - 1]->name);
-            mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/cur", server->maildir, server->users_list[server->user_amount - 1]->name);
-            mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/new", server->maildir, server->users_list[server->user_amount - 1]->name);
-            mkdir(path, 0777);
-            snprintf(path, PATH_MAX, "%s/%s/tmp", server->maildir, server->users_list[server->user_amount - 1]->name);
-            mkdir(path, 0777);
-            free(path);
             return TRUE;
         }
         return FALSE;
@@ -502,4 +505,8 @@ size_t get_log_size() {
 }
 access_log ** get_access_log() {
     return server->log;
+}
+
+char * get_maildir(){
+    return server->maildir;
 }

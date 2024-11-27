@@ -1,7 +1,7 @@
 #include "include/handlers.h"
 #include <fcntl.h>
 #include <unistd.h>
-
+#include <sys/stat.h>
 
 int handle_user(struct selector_key *key, char * username){
     client_data * clientData = ATTACHMENT(key);
@@ -15,7 +15,8 @@ int handle_user(struct selector_key *key, char * username){
 }
 
 void handle_quit(struct selector_key *key){
-    close_client(key);
+    client_data * clientData = ATTACHMENT(key);
+    clientData->readyToLogout = TRUE;
 }
 
 int handle_pass(struct selector_key *key, char * password){
@@ -199,7 +200,7 @@ void handle_dele(struct selector_key *key, char * mail_number){
         return;
     }
 
-    if(mail_id > mailbox->mail_count){
+    if(mail_id > mailbox->mail_count + mailbox->deleted_count){
         write_error_message_with_arg(key, NO_MESSAGE, endptr);
         return;
     }
@@ -209,30 +210,56 @@ void handle_dele(struct selector_key *key, char * mail_number){
 		return;
 	}
 
+	// Move message to cur folder
+    char *oldPath = mailbox->mails[mail_id - 1].filename;
+    char * filename = strrchr(oldPath, '/');
+    char * newPath = malloc(strlen(oldPath) + 2);
+    char  * maildir = get_maildir();
+    snprintf(newPath, strlen(oldPath) + 2, "%s/%s/cur/%s", maildir, clientData->username, filename);
+
+    //si no existe cur la creamos
+    char * user_maildir = malloc(strlen(maildir)+strlen(clientData->username)+2+4);
+    sprintf(user_maildir, "%s/%s/cur", maildir, clientData->username);
+    mkdir(user_maildir, 0777); //if it already exits does not matter
+    free(user_maildir);
+
+    mailbox->mails[mail_id - 1].filename = newPath;
+    if (rename(oldPath, newPath) != 0) {
+        write_error_message(key, INTERNAL_ERROR);
+        free(oldPath);
+        return;
+    }
     mailbox->mails[mail_id - 1].deleted = TRUE;
     mailbox->mails_size -= mailbox->mails[mail_id - 1].size;
     mailbox->mail_count--;
     mailbox->deleted_count++;
-    
-	write_ok_message(key, MARKED_TO_BE_DELETED);
-  	return;
+    write_ok_message(key, MARKED_TO_BE_DELETED);
+    free(oldPath);
 }
 
 void handle_rset(struct selector_key *key){
   	client_data * clientData = ATTACHMENT(key);
 	t_mailbox * mailbox = clientData->user->mailbox;
 
-    int rset_amount = 0;
     for(int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++){
 		if(mailbox->mails[i].deleted){
-      		mailbox->mails[i].deleted = FALSE;
+            char * filepath = mailbox->mails[i].filename;
+            char * new_filename = malloc(strlen(filepath) + 1);
+            char * fileName = strrchr(filepath, '/');
+            sprintf(new_filename, "%s/%s/new/%s", get_maildir(),clientData->username, fileName);
+            if(rename(filepath, new_filename) != 0){
+                write_error_message(key, INTERNAL_ERROR);
+                free(new_filename);
+                return;
+            }
+            mailbox->mails[i].deleted = FALSE;
             mailbox->mails_size += clientData->user->mailbox->mails[i].size;
             mailbox->mail_count++;
             mailbox->deleted_count--;
+            free(new_filename);
         }
 	}
     write_ok_message(key, JUST_OK);
-    return;
 }
 
 void handle_update_quit(struct selector_key *key){
@@ -252,5 +279,4 @@ void handle_update_quit(struct selector_key *key){
     } else {
         write_ok_message(key, LOGOUT_OUT);
     }
-    handle_quit(key);
 }

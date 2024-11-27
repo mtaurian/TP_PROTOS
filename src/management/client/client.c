@@ -19,7 +19,6 @@ int conectToServer(struct clientArgs * client_args) {
     addrCriteria.ai_socktype = SOCK_STREAM;
     addrCriteria.ai_protocol = IPPROTO_TCP;
 
-
     struct addrinfo* servAddr;
     int rtnVal = getaddrinfo(client_args->client_addr, client_args->client_port, &addrCriteria, &servAddr);
     if (rtnVal != 0) {
@@ -113,6 +112,19 @@ int main(const int argc,char **argv) {
     int sock = conectToServer(clientArguments);
     if (sock < 0) {
         perror("[MGMT] socket() failed");
+        return -1;
+    }
+    char response[BUFFER_SIZE];
+    read(sock, response, BUFFER_SIZE - 1);
+    if (strncmp(response, "+OK", 3) != 0) {
+        printf("[MGMT] Error receiving welcome message from server. Message was: %s\n", response);
+        free(clientArguments);
+        close(sock);
+        return -1;
+    }
+    if(argc < 2){
+        printf("Missing arguments.\nTry './manager_client -h' for more information.\n");
+        free(clientArguments);
         return -1;
     }
     if(!authenticate(clientArguments->usernameAndPassword, sock) || send_command(clientArguments, sock) ) {

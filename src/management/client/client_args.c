@@ -11,14 +11,14 @@ usage(const char *progname) {
     fprintf(stderr,
             "Usage: %s -S <user:password> [OPTION]...\n"
                 "\n"
-                "   -h                         Imprime la ayuda y termina.\n"
-                "   -H <host>                  Direccion donde sirve el servicio de management. Si no se define se usa el valor por defecto 127.0.0.1 \n"
-                "   -P <port>                  Puerto donde sirve el servicio de management. Si no se define se usa el valor por defecto 8080.\n"
-                "   -U                         Envia una solicitud para obtener los usuarios registrados.\n"
-                "   -A <user:password>         Envia una solicitud para agregar un usuario al servidor.\n"
-                "   -D <user>                  Envía una solicitud para eliminar un usuario del servidor.\n"
-                "   -M                         Envia una solicitud para obtener métricas específicas del servidor.\n"
-                "   -L                         Envia una solicitud para obtener los logs del servidor.\n"
+                "   -h                         Prints help and exits.\n"
+                "   -H <host>                  Address where the management service is hosted. If not defined, the default value 127.0.0.1 is used.\n"
+                "   -P <port>                  Port where the management service is served. If not defined, the default value 8080 is used.\n"
+                "   -U                         Sends a request to get the registered users.\n"
+                "   -A <user:password>         Sends a request to add a user to the server.\n"
+                "   -D <user>                  Sends a request to delete a user from the server.\n"
+                "   -M                         Sends a request to get specific server metrics.\n"
+                "   -L                         Sends a request to get the server logs.\n"
                 "\n",
        progname);   
     exit(1);

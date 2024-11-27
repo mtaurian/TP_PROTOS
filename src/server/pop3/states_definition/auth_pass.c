@@ -9,8 +9,15 @@ void auth_pass_on_departure(unsigned state, struct selector_key *key){
 }
 
 unsigned int auth_pass_on_ready_to_read(struct selector_key *key){
-    user_request entry = parse(key);
+    client_data *clientData = ATTACHMENT(key);
     int ret = AUTHORIZATION_PASSWORD;
+
+    if(clientData->readyToLogout && !buffer_can_read(&clientData->responseBuffer)){
+        close_client(key);
+        return ret;
+    }
+
+    user_request entry = parse(key);
 
     if(entry.command == INVALID){
         write_error_message(key, UNKNOWN_COMMAND);
