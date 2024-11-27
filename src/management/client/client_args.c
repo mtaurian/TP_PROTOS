@@ -11,7 +11,7 @@ usage(const char *progname) {
     fprintf(stderr,
             "Usage: %s -S <user:password> [OPTION]...\n"
                 "\n"
-                "   -h                         Prints help and finishes.\n"
+                "   -h                         Prints help and exits.\n"
                 "   -H <host>                  Address where the management service is hosted. If not defined, the default value 127.0.0.1 is used.\n"
                 "   -P <port>                  Port where the management service is served. If not defined, the default value 8080 is used.\n"
                 "   -U                         Sends a request to get the registered users.\n"
