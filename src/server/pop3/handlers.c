@@ -213,28 +213,11 @@ void handle_dele(struct selector_key *key, char * mail_number){
 	// Move message to cur folder
     char *oldPath = mailbox->mails[mail_id - 1].filename;
     char * filename = strrchr(oldPath, '/');
-    char * tmpPath = malloc(strlen(oldPath) + 1);
     char * newPath = malloc(strlen(oldPath) + 2);
-    strcpy(tmpPath, oldPath);
-
-    char *lastSlash = strrchr(tmpPath, '/');
-    if (lastSlash != NULL) {
-        *(lastSlash) = '\0';
-
-    } else {
-        write_error_message(key, INTERNAL_ERROR);
-        free(tmpPath);
-        free(oldPath);
-        return;
-    }
-
-    char *secondLastSlash = strrchr(tmpPath, '/');
-    if (secondLastSlash != NULL) {
-        *secondLastSlash = '\0';
-    }
-
-    snprintf(newPath, strlen(oldPath) + 2, "%s/cur/%s", tmpPath, filename);
     char  * maildir = get_maildir();
+    snprintf(newPath, strlen(oldPath) + 2, "%s/%s/cur/%s", maildir, clientData->username, filename);
+
+    //si no existe cur la creamos
     char * user_maildir = malloc(strlen(maildir)+strlen(clientData->username)+2+4);
     sprintf(user_maildir, "%s/%s/cur", maildir, clientData->username);
     mkdir(user_maildir, 0777); //if it already exits does not matter
@@ -243,7 +226,6 @@ void handle_dele(struct selector_key *key, char * mail_number){
     mailbox->mails[mail_id - 1].filename = newPath;
     if (rename(oldPath, newPath) != 0) {
         write_error_message(key, INTERNAL_ERROR);
-        free(tmpPath);
         free(oldPath);
         return;
     }
@@ -252,7 +234,6 @@ void handle_dele(struct selector_key *key, char * mail_number){
     mailbox->mail_count--;
     mailbox->deleted_count++;
     write_ok_message(key, MARKED_TO_BE_DELETED);
-    free(tmpPath);
     free(oldPath);
 }
 
@@ -262,10 +243,20 @@ void handle_rset(struct selector_key *key){
 
     for(int i = 0; i < (mailbox->mail_count + mailbox->deleted_count); i++){
 		if(mailbox->mails[i].deleted){
-      		mailbox->mails[i].deleted = FALSE;
+            char * filepath = mailbox->mails[i].filename;
+            char * new_filename = malloc(strlen(filepath) + 1);
+            char * fileName = strrchr(filepath, '/');
+            sprintf(new_filename, "%s/%s/new/%s", get_maildir(),clientData->username, fileName);
+            if(rename(filepath, new_filename) != 0){
+                write_error_message(key, INTERNAL_ERROR);
+                free(new_filename);
+                return;
+            }
+            mailbox->mails[i].deleted = FALSE;
             mailbox->mails_size += clientData->user->mailbox->mails[i].size;
             mailbox->mail_count++;
             mailbox->deleted_count--;
+            free(new_filename);
         }
 	}
     write_ok_message(key, JUST_OK);
