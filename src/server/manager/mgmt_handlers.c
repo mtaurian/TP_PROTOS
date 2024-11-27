@@ -99,7 +99,7 @@ boolean handle_access_log(struct selector_key *key) {
 
         char entry[256];
         snprintf(entry, sizeof(entry), "%s %-20s %-20s\n",
-                 time_buffer, log->user->name, log->type ? "LOGIN" : "LOGOUT");
+                 time_buffer, log->user->name, log->type ? "LOGOUT" : "LOGIN");
 
         size_t required_size = strlen(log_buffer) + strlen(entry) + 1; // +1 for null terminator
         if (required_size > buffer_size) {
